@@ -83,9 +83,9 @@ export default defineConfig(({ mode, command }) => {
         transformIndexHtml: (html) =>
           html.replace(/%BASE_PATH%/g, basePath)
             .replace(/%APP_SCRIPT_SNIPPET%/g, '')
-            .replace(/%APP_TITLE%/g, 'OpenCTI Dev')
-            .replace(/%APP_DESCRIPTION%/g, 'OpenCTI Development platform')
-            .replace(/%APP_FAVICON%/g, `${basePath}/assets/static/favicon.png`),
+            .replace(/%APP_TITLE%/g, '6G CTI')
+            .replace(/%APP_DESCRIPTION%/g, '6G cyber threat intelligence research platform')
+            .replace(/%APP_FAVICON%/g, `${basePath}/assets/static/6g-cti.svg`),
       },
       (watchGraphQL ? {
         name: 'relay-schema-watcher',

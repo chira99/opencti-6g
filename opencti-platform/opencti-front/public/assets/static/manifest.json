@@ -1,15 +1,16 @@
 {
-  "short_name": "OpenCTI dashboard",
-  "name": "The OpenCTI web interface frontend.",
+  "short_name": "6G CTI",
+  "name": "6G CTI",
   "icons": [
     {
-      "src": "favicon.png",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
+      "src": "6g-cti.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
     }
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "theme_color": "#4e54b4",
+  "background_color": "#f1f2f5"
 }

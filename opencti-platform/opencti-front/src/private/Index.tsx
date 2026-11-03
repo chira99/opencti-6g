@@ -25,7 +25,10 @@ import { TooltipProvider } from '@filigran/design-system';
 import { TOOLTIP_DELAY_MS } from './components/nav/topBarConstants';
 import { ChatbotProvider } from './components/chatbox/ChatbotContext';
 import useTopBanner from '../utils/hooks/useTopBanner';
+import useEnterpriseEdition from '../utils/hooks/useEnterpriseEdition';
+import { getCommunityEditionRedirect } from '../utils/communityEdition';
 
+const TelecomWorkspace = lazy(() => import('./components/telecom/TelecomWorkspace'));
 const HomeDashboard = lazy(() => import('./components/HomeDashboard'));
 const StixObjectOrStixRelationship = lazy(() => import('./components/StixObjectOrStixRelationship'));
 const RootSearchBulk = lazy(() => import('./components/SearchBulkContainer'));
@@ -58,6 +61,9 @@ interface IndexProps {
 
 const Index = ({ settings }: IndexProps) => {
   const location = useLocation();
+  const isEnterpriseEdition = useEnterpriseEdition();
+  const editionRedirect = getCommunityEditionRedirect(location.pathname, isEnterpriseEdition);
+  const isTelecomRoute = location.pathname.startsWith('/dashboard/telecom');
   const isForcePasswordChangeRoute = location.pathname.startsWith('/dashboard/change-password');
   const theme = useTheme<Theme>();
   const { isTrashEnable } = useHelper();
@@ -90,6 +96,7 @@ const Index = ({ settings }: IndexProps) => {
   const mainSx: SxProps = {
     transition: 'margin-right 225ms cubic-bezier(0.4, 0, 0.2, 1)',
     flexGrow: 1,
+    ...(isTelecomRoute ? { minWidth: 0 } : {}),
     overflowY: 'hidden',
     height: '100vh',
     marginRight: 'var(--chatbot-sidebar-width, 0px)',
@@ -102,6 +109,8 @@ const Index = ({ settings }: IndexProps) => {
     overflowY: isForcePasswordChangeRoute ? 'hidden' : 'auto',
     minHeight: 0,
   };
+
+  if (editionRedirect) return <Navigate to={editionRedirect} replace={true} />;
 
   return (
     // One provider for the whole private app: a library Tooltip throws without one, and bar
@@ -116,7 +125,7 @@ const Index = ({ settings }: IndexProps) => {
         <Box
           sx={{
             display: 'flex',
-            minWidth: isForcePasswordChangeRoute ? 0 : 1400,
+            minWidth: isForcePasswordChangeRoute || isTelecomRoute ? 0 : 1400,
             marginTop: `calc(${topBannerHeight}px + ${bannerHeight})`,
             marginBottom: bannerHeight,
           }}
@@ -138,6 +147,7 @@ const Index = ({ settings }: IndexProps) => {
                         )
                       : boundaryWrapper(HomeDashboard)}
                   />
+                  <Route path="/telecom" element={boundaryWrapper(TelecomWorkspace)} />
                   <Route path="/search/*" element={boundaryWrapper(RootSearch)} />
                   <Route path="/id/:id" element={boundaryWrapper(StixObjectOrStixRelationship)} />
                   <Route path="/search_bulk" element={boundaryWrapper(RootSearchBulk)} />

@@ -301,7 +301,7 @@ const StixCoreObjectContentFiles: FunctionComponent<StixCoreObjectContentFilesPr
         />
       </ContentBloc>
 
-      {hasOutcomesTemplate && (
+      {isEnterpriseEdition && hasOutcomesTemplate && (
         <ContentBloc
           title={(
             <>

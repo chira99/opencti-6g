@@ -11,6 +11,7 @@ import { useTheme } from '@mui/styles';
 import { useFormatter } from '../../../../components/i18n';
 import useGranted, { SETTINGS_SETPARAMETERS } from '../../../../utils/hooks/useGranted';
 import useAuth from '../../../../utils/hooks/useAuth';
+import useEnterpriseEdition from '../../../../utils/hooks/useEnterpriseEdition';
 import type { Theme } from '../../../../components/Theme';
 
 // Deprecated - https://mui.com/system/styles/basics/
@@ -49,6 +50,8 @@ const EnterpriseEditionButton = ({
     settings: { id: settingsId },
   } = useAuth();
   const isAdmin = useGranted([SETTINGS_SETPARAMETERS]);
+  const isEnterpriseEdition = useEnterpriseEdition();
+  if (!isEnterpriseEdition) return null;
   return (
     <>
       <EnterpriseEditionAgreement

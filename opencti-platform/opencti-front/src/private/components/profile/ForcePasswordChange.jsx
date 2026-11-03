@@ -5,12 +5,8 @@ import PasswordPolicies from '../common/form/PasswordPolicies';
 import { useFormatter } from '../../../components/i18n';
 import { MESSAGING$ } from '../../../relay/environment';
 import ForcePasswordChangeForm from '../../../components/ForcePasswordChangeForm';
-import logoDark from '../../../static/images/logo_text_dark.png';
-import logoLight from '../../../static/images/logo_text_light.png';
-import logoFiligranBaselineDark from '../../../static/images/logo_filigran_baseline_dark.svg';
-import logoFiligranGradientDark from '../../../static/images/logo_filigran_gradient_dark.svg';
-import logoFiligranBaselineLight from '../../../static/images/logo_filigran_baseline_light.svg';
-import logoFiligranGradientLight from '../../../static/images/logo_filigran_gradient_light.svg';
+import { getPlatformWordmark, PLATFORM_NAME } from '../../../utils/platformBranding';
+import PlatformAsideBranding from '../../../public/components/login/PlatformAsideBranding';
 
 const ForcePasswordChange = () => {
   const theme = useTheme();
@@ -30,6 +26,7 @@ const ForcePasswordChange = () => {
         alignItems="center"
         gap={4}
         sx={{
+          position: 'relative',
           minWidth: 500,
           overflow: 'hidden',
           background: theme.palette.designSystem?.background?.main ?? theme.palette.background.default,
@@ -38,9 +35,9 @@ const ForcePasswordChange = () => {
         }}
       >
         <img
-          src={theme.palette.mode === 'dark' ? logoDark : logoLight}
-          alt="OpenCTI Logo"
-          width={180}
+          src={getPlatformWordmark(theme.palette.mode)}
+          alt={`${PLATFORM_NAME} logo`}
+          width={216}
         />
         <Stack gap={1} sx={{ width: 500 }}>
           <Box
@@ -60,10 +57,14 @@ const ForcePasswordChange = () => {
             />
           </Box>
         </Stack>
+        <Box sx={{ display: { xs: 'block', md: 'none' } }}>
+          <PlatformAsideBranding showWatermark={false} />
+        </Box>
       </Stack>
       <Box
         flex={1}
         sx={{
+          display: { xs: 'none', md: 'block' },
           background: theme.palette.mode === 'dark'
             ? 'linear-gradient(100deg, #050A14 0%, #0C1728 100%)'
             : 'linear-gradient(100deg, #EAEAED 0%, #FEFEFF 100%)',
@@ -71,31 +72,7 @@ const ForcePasswordChange = () => {
           overflow: 'hidden',
         }}
       >
-        <img
-          src={theme.palette.mode === 'dark' ? logoFiligranGradientDark : logoFiligranGradientLight}
-          alt="Filigran Logo"
-          style={{
-            userSelect: 'none',
-            pointerEvents: 'none',
-            height: `calc(100% + ${theme.spacing(10)})`,
-            position: 'absolute',
-            top: theme.spacing(-5),
-            right: theme.spacing(-5),
-          }}
-        />
-        <img
-          src={theme.palette.mode === 'dark' ? logoFiligranBaselineDark : logoFiligranBaselineLight}
-          alt="Made by Filigran logo"
-          width={130}
-          style={{
-            userSelect: 'none',
-            pointerEvents: 'none',
-            position: 'absolute',
-            bottom: theme.spacing(3),
-            left: theme.spacing(3),
-            zIndex: 2,
-          }}
-        />
+        <PlatformAsideBranding />
       </Box>
     </Stack>
   );

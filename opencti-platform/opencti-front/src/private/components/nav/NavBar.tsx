@@ -1,4 +1,4 @@
-import { Navbar, NavbarItem, NavbarSeparator, NavbarSubmenu, NavbarSubmenuItem, ProductSwitcher } from '@filigran/design-system';
+import { Navbar, NavbarItem, NavbarSeparator, NavbarSubmenu, NavbarSubmenuItem } from '@filigran/design-system';
 import { useTheme } from '@mui/styles';
 import React, { useState } from 'react';
 import { graphql, usePreloadedQuery } from 'react-relay';
@@ -6,25 +6,15 @@ import { Link, useLocation } from 'react-router';
 import { useFormatter } from '../../../components/i18n';
 import { Theme } from '../../../components/Theme';
 import { THEME_DARK_DEFAULT_BACKGROUND } from '../../../components/ThemeDark';
-import logoOpenAEVDark from '../../../static/images/logo_open_aev_dark.svg';
-import logoOpenAEVLight from '../../../static/images/logo_open_aev_light.svg';
-import logoXTMHubDark from '../../../static/images/logo_xtm_hub_dark.svg';
-import logoXTMHubLight from '../../../static/images/logo_xtm_hub_light.svg';
-import LogoCollapsedOrange from '../../../static/images/logo_orange.svg';
-import LogoTextOrange from '../../../static/images/logo_text_orange.svg';
 import useAuth from '../../../utils/hooks/useAuth';
 import useTopBanner from '../../../utils/hooks/useTopBanner';
-import useGranted, { SETTINGS_SETMANAGEXTMHUB } from '../../../utils/hooks/useGranted';
 import useQueryLoading from '../../../utils/hooks/useQueryLoading';
-import { isNotEmptyField } from '../../../utils/utils';
 import { NavBarQuery } from './__generated__/NavBarQuery.graphql';
 import { useSettingsMessagesBannerHeight } from '../settings/settings_messages/SettingsMessagesBanner';
-import MadeByFiligran from './MadeByFiligran';
-import { readNavOpen, readSelectedMenu, writeNavOpen, writeSelectedMenu } from './navBarConstants';
+import MadeByNetsLab from './MadeByNetsLab';
+import { OPEN_BAR_WIDTH, SMALL_BAR_WIDTH, readNavOpen, readSelectedMenu, writeNavOpen, writeSelectedMenu } from './navBarConstants';
 import useNavMenu, { NavGroup, NavItem, NavSubItem } from './useNavMenu';
-
-const OPENAEV_FALLBACK_URL = 'https://filigran.io/solutions/open-aev/';
-const XTMHUB_FALLBACK_URL = 'https://hub.filigran.io';
+import './NavBar.css';
 
 export const navBarQuery = graphql`
   query NavBarQuery {
@@ -49,6 +39,7 @@ export interface NavBarViewProps {
   onSubmenuOpenChange: (id: string, open: boolean) => void;
   submenuShowIcons: boolean;
   customBackground?: string;
+  navigationTheme?: Theme['researchNavigation'];
   accentColor?: string;
   topOffset: string;
   bottomOffset: string;
@@ -67,6 +58,7 @@ export const NavBarView: React.FC<NavBarViewProps> = ({
   onSubmenuOpenChange,
   submenuShowIcons,
   customBackground,
+  navigationTheme,
   accentColor,
   topOffset,
   bottomOffset,
@@ -78,12 +70,24 @@ export const NavBarView: React.FC<NavBarViewProps> = ({
   // FDS-WORKAROUND #11: sticky, definite-height rail geometry — remove when the <nav> takes the height it is given — see fds-migration/LIBRARY-FEEDBACK.md #11
   const navStyle: React.CSSProperties & Record<string, string | undefined> = {
     position: 'sticky',
+    width: `${collapsed ? SMALL_BAR_WIDTH : OPEN_BAR_WIDTH}px`,
     top: topOffset,
     marginTop: flowOffset,
     alignSelf: 'flex-start',
     height: `calc(100dvh - ${topOffset} - ${bottomOffset})`,
   };
   if (customBackground) navStyle.background = customBackground;
+  if (navigationTheme) {
+    // Only the rail inherits these tokens. Portalled menus keep the page theme.
+    navStyle['--text-default-primary'] = navigationTheme.foreground;
+    navStyle['--text-default-secondary'] = navigationTheme.muted;
+    navStyle['--bg-elevation-hover-layer-0'] = `color-mix(in srgb, ${navigationTheme.foreground} 8%, ${navigationTheme.background})`;
+    navStyle['--bg-elevation-highlight-layer-0'] = `color-mix(in srgb, ${navigationTheme.foreground} 12%, ${navigationTheme.background})`;
+    // Rebind consumed aliases: root aliases have already resolved to the page palette.
+    navStyle['--bg-elevation-default'] = navigationTheme.background;
+    navStyle['--bg-elevation-hover'] = 'var(--bg-elevation-hover-layer-0)';
+    navStyle['--bg-elevation-highlight'] = 'var(--bg-elevation-highlight-layer-0)';
+  }
   if (accentColor) {
     navStyle['--color-filigran-brand-primary'] = accentColor;
     // FDS-WORKAROUND #6: re-derive the brand tint tokens — remove when derived tokens follow a subtree override — see fds-migration/LIBRARY-FEEDBACK.md #6
@@ -164,6 +168,28 @@ export const NavBarView: React.FC<NavBarViewProps> = ({
   );
 };
 
+interface NavBarLogoProps {
+  collapsed: boolean;
+  logo?: string;
+  logoCollapsed?: string;
+}
+
+export const NavBarLogo: React.FC<NavBarLogoProps> = ({ collapsed, logo, logoCollapsed }) => (
+  <Link
+    to="/dashboard"
+    aria-label="logo"
+    className="inline-flex h-9 items-center rounded-sm focus-visible:outline-none focus-visible:ring-2 ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-focus"
+  >
+    <img
+      src={collapsed ? logoCollapsed : logo}
+      alt=""
+      width={collapsed ? 28 : 126}
+      height={28}
+      style={{ objectFit: 'contain', objectPosition: 'left' }}
+    />
+  </Link>
+);
+
 interface NavBarComponentProps {
   queryRef: NonNullable<ReturnType<typeof useQueryLoading<NavBarQuery>>>;
 }
@@ -174,11 +200,6 @@ const NavBarComponent: React.FC<NavBarComponentProps> = ({ queryRef }) => {
   const location = useLocation();
   const {
     me: { submenu_auto_collapse: submenuAutoCollapse, submenu_show_icons: submenuShowIcons, draftContext },
-    settings: {
-      platform_openaev_url: openAEVUrl,
-      platform_xtmhub_url: xtmhubUrl,
-      xtm_hub_registration_status: xtmhubStatus,
-    },
     bannerSettings: { bannerHeightNumber },
   } = useAuth();
   const { height: topBannerHeight } = useTopBanner();
@@ -186,13 +207,12 @@ const NavBarComponent: React.FC<NavBarComponentProps> = ({ queryRef }) => {
   // Mirrors the app shell's own offsets (private/Index.tsx and nav/TopBar.tsx): the classification banners take the
   // banner height at the top and at the bottom, the notification banner `topBannerHeight` and the platform message
   // banner `settingsMessagesBannerHeight` at the top only. Without the platform message banner height the fixed
-  // banner overlaps the top of the rail and hides the Filigran logo.
+  // banner overlaps the top of the rail and hides the platform logo.
   const topOffset = `${topBannerHeight + bannerHeightNumber + settingsMessagesBannerHeight}px`;
   const bottomOffset = `${bannerHeightNumber}px`;
   // The parent shell (private/Index.tsx) reserves flow space for the classification and notification banners via its
   // own margins; only the platform message banner is left for the rail to reserve here.
   const flowOffset = `${settingsMessagesBannerHeight}px`;
-  const hasXtmHubAccess = useGranted([SETTINGS_SETMANAGEXTMHUB]);
   const data = usePreloadedQuery<NavBarQuery>(navBarQuery, queryRef);
   const groups = useNavMenu();
 
@@ -221,7 +241,9 @@ const NavBarComponent: React.FC<NavBarComponentProps> = ({ queryRef }) => {
 
   const isLightTheme = theme.palette.mode === 'light';
 
+  const navigationTheme = theme.researchNavigation;
   const customBackground = (() => {
+    if (navigationTheme) return navigationTheme.background;
     if (isLightTheme) return undefined;
     const start = theme.palette.background?.gradient?.start ?? theme.palette.background?.default;
     const end = theme.palette.background?.gradient?.end ?? theme.palette.background?.secondary;
@@ -232,11 +254,7 @@ const NavBarComponent: React.FC<NavBarComponentProps> = ({ queryRef }) => {
   // FDS-WORKAROUND #1: selected-row accent resolved product-side — remove when Navbar exposes an accent prop — see fds-migration/LIBRARY-FEEDBACK.md #1
   const accentColor = draftContext
     ? theme.palette.designSystem?.alert?.warning?.primary
-    : theme.palette.primary?.main;
-
-  const productLogo = draftContext ? LogoTextOrange : theme.logo;
-  const productLogoCollapsed = draftContext ? LogoCollapsedOrange : theme.logo_collapsed;
-  const xtmHubRegistered = xtmhubStatus === 'registered' || !hasXtmHubAccess;
+    : navigationTheme?.accent ?? theme.palette.primary?.main;
 
   return (
     <NavBarView
@@ -248,45 +266,17 @@ const NavBarComponent: React.FC<NavBarComponentProps> = ({ queryRef }) => {
       onSubmenuOpenChange={handleSubmenuOpenChange}
       submenuShowIcons={submenuShowIcons ?? false}
       customBackground={customBackground}
+      navigationTheme={navigationTheme}
       accentColor={accentColor}
       topOffset={topOffset}
       bottomOffset={bottomOffset}
       flowOffset={flowOffset}
       navLabel={t_i18n('Main navigation')}
       header={(
-        <ProductSwitcher
-          label={t_i18n('Switch product')}
-          logo={<img src={productLogo} alt="" width={126} height={28} style={{ objectFit: 'contain', objectPosition: 'left' }} />}
-          logoCollapsed={<img src={productLogoCollapsed} alt="" height={28} width={28} style={{ objectFit: 'contain' }} />}
-          logoTo="/dashboard"
-          linkComponent={Link}
-          // The logo link and the "Home" row both point at /dashboard, so the logo cannot be named "Home": two
-          // links with the same accessible name inside one navigation are ambiguous for screen readers and break
-          // the e2e page object's `exact` name lookup. "logo" is the accessible name the replaced rail exposed
-          // (its <img alt="logo">), and two settings specs anchor on it, so keep it identical.
-          logoLabel="logo"
-          options={[
-            {
-              id: 'openaev',
-              label: t_i18n('OpenAEV'),
-              tooltip: isNotEmptyField(openAEVUrl) ? t_i18n('Platform connected') : t_i18n('Get OpenAEV now'),
-              // Option logos fill their own slot; a fixed width overflows it.
-              logo: <img src={isLightTheme ? logoOpenAEVLight : logoOpenAEVDark} alt="" style={{ width: '100%', height: 'auto', objectFit: 'contain' }} />,
-              href: isNotEmptyField(openAEVUrl) ? (openAEVUrl as string) : OPENAEV_FALLBACK_URL,
-            },
-            {
-              id: 'xtmhub',
-              label: t_i18n('XTM Hub'),
-              logo: <img src={isLightTheme ? logoXTMHubLight : logoXTMHubDark} alt="" style={{ width: '100%', height: 'auto', objectFit: 'contain' }} />,
-              ...(xtmHubRegistered
-                ? { href: isNotEmptyField(xtmhubUrl) ? (xtmhubUrl as string) : XTMHUB_FALLBACK_URL }
-                : { to: '/dashboard/settings/experience' }),
-            },
-          ]}
-        />
+        <NavBarLogo collapsed={!navOpen} logo={theme.logo} logoCollapsed={theme.logo_collapsed} />
       )}
       footer={!data?.settings?.platform_whitemark && (
-        <MadeByFiligran collapsed={!navOpen} />
+        <MadeByNetsLab collapsed={!navOpen} />
       )}
     />
   );

@@ -89,6 +89,7 @@ const StixCoreRelationshipSharing: FunctionComponent<
   const userIsOrganizationEditor = useGranted([
     KNOWLEDGE_KNUPDATE_KNORGARESTRICT,
   ]);
+  if (!isEnterpriseEdition) return null;
   if (!userIsOrganizationEditor) {
     return <div style={{ marginTop: -20 }} />;
   }

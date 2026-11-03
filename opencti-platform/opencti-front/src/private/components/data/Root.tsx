@@ -14,6 +14,7 @@ import useGranted, {
   TAXIIAPI,
 } from '../../../utils/hooks/useGranted';
 import useHelper from '../../../utils/hooks/useHelper';
+import useEnterpriseEdition from '../../../utils/hooks/useEnterpriseEdition';
 import Loader from '../../../components/Loader';
 
 const CsvMappers = lazy(() => import('./CsvMappers'));
@@ -52,7 +53,11 @@ const Root = () => {
   const isGrantedToKnowledge = useGranted([KNOWLEDGE]);
   const isGrantedToIngestion = useGranted([MODULES, INGESTION, INGESTION_SETINGESTIONS]);
   const isGrantedToImport = useGranted([KNOWLEDGE_KNASKIMPORT]);
-  const isGrantedToProcessing = useGranted([KNOWLEDGE_KNUPDATE, CSVMAPPERS, AUTOMATION_AUTMANAGE]);
+  const isEnterpriseEdition = useEnterpriseEdition();
+  const isGrantedToTasks = useGranted([KNOWLEDGE_KNUPDATE]);
+  const isGrantedToMappers = useGranted([CSVMAPPERS]);
+  const isGrantedToAutomation = useGranted([AUTOMATION_AUTMANAGE]) && isEnterpriseEdition;
+  const isGrantedToProcessing = isGrantedToTasks || isGrantedToMappers || isGrantedToAutomation;
   const isGrantedToSharing = useGranted([TAXIIAPI]);
   const isGrantedToManage = useGranted([BYPASS]);
 
@@ -75,7 +80,6 @@ const Root = () => {
     redirect = '/dashboard';
   }
 
-  const isGrantedToAutomation = useGranted([AUTOMATION_AUTMANAGE]);
   const { isFeatureEnable } = useHelper();
   const isDataSanityManagerEnabled = isFeatureEnable('DATA_SANITY_MANAGER');
   return (
@@ -168,19 +172,14 @@ const Root = () => {
         <Route
           path="/processing"
           element={(
-            <Security
-              needs={[KNOWLEDGE_KNUPDATE, AUTOMATION_AUTMANAGE]}
-              placeholder={(
-                <Security
-                  needs={[CSVMAPPERS]}
-                  placeholder={<Navigate to="/dashboard/data/processing/tasks" />}
-                >
-                  <Navigate to="/dashboard/data/processing/csv_mapper" />
-                </Security>
-              )}
-            >
-              <Navigate to={isGrantedToAutomation ? '/dashboard/data/processing/automation' : '/dashboard/data/processing/tasks'} />
-            </Security>
+            <Navigate to={isGrantedToAutomation
+              ? '/dashboard/data/processing/automation'
+              : isGrantedToTasks
+                ? '/dashboard/data/processing/tasks'
+                : isGrantedToMappers
+                  ? '/dashboard/data/processing/csv_mapper'
+                  : '/dashboard'}
+            />
           )}
         />
         <Route

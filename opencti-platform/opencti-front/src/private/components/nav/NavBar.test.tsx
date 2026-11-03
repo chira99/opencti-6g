@@ -4,8 +4,8 @@ import { createRequire } from 'node:module';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import testRender from '../../../utils/tests/test-render';
-import MadeByFiligran from './MadeByFiligran';
-import { isRouteSelected, NavBarView, NavBarViewProps } from './NavBar';
+import MadeByNetsLab from './MadeByNetsLab';
+import { isRouteSelected, NavBarLogo, NavBarView, NavBarViewProps } from './NavBar';
 import { NavGroup } from './useNavMenu';
 
 const groups: NavGroup[] = [
@@ -141,7 +141,7 @@ describe('NavBarView', () => {
     expect(nav.style.position).toBe('sticky');
     expect(nav.style.top).toBe('50px');
     // The platform message banner is a fixed overlay the app shell does not reserve flow space for, so the rail
-    // reserves it itself to keep the ProductSwitcher (Filigran logo) from being hidden while unscrolled.
+    // reserves it itself to keep the platform logo from being hidden while unscrolled.
     expect(nav.style.marginTop).toBe('30px');
     // jsdom reorders the terms of a calc(), so assert on its parts: the rail
     // is one viewport tall minus the space the banners take.
@@ -159,24 +159,22 @@ describe('NavBarView', () => {
   });
 });
 
-describe('MadeByFiligran', () => {
+describe('MadeByNetsLab', () => {
   it('keeps one accessible name in both rail states', () => {
-    const { unmount } = testRender(<MadeByFiligran collapsed={false} />, { route: '/dashboard' });
-    expect(screen.getByAltText('Filigran')).toBeInTheDocument();
+    const { unmount } = testRender(<MadeByNetsLab collapsed={false} />, { route: '/dashboard' });
+    expect(screen.getByRole('img', { name: 'Made by NetsLab' })).toBeInTheDocument();
     expect(screen.getByText('Made by')).toBeInTheDocument();
+    expect(screen.getByText('NetsLab')).toBeInTheDocument();
     unmount();
-    testRender(<MadeByFiligran collapsed />, { route: '/dashboard' });
-    expect(screen.getByAltText('Filigran')).toBeInTheDocument();
+    testRender(<MadeByNetsLab collapsed />, { route: '/dashboard' });
+    expect(screen.getByRole('img', { name: 'Made by NetsLab' })).toBeInTheDocument();
     expect(screen.queryByText('Made by')).not.toBeInTheDocument();
   });
 
-  it('shows the emblem alone when collapsed, by cropping the wordmark', () => {
-    testRender(<MadeByFiligran collapsed />, { route: '/dashboard' });
-    const logo = screen.getByAltText('Filigran');
-    expect(logo.style.width).toBe('12px');
-    expect(logo.style.height).toBe('12px');
-    expect(logo.style.objectFit).toBe('cover');
-    expect(logo.style.objectPosition).toBe('left center');
+  it('shows the lab monogram when collapsed', () => {
+    testRender(<MadeByNetsLab collapsed />, { route: '/dashboard' });
+    expect(screen.getByRole('img', { name: 'Made by NetsLab' })).toHaveTextContent('NL');
+    expect(screen.queryByText('NetsLab')).not.toBeInTheDocument();
   });
 });
 
@@ -263,13 +261,12 @@ describe('NavBarView accent compensation', () => {
 
 describe('NavBarView rail width', () => {
   it('collapses to the width the floating toolbars offset themselves by', () => {
-    // The library sizes the rail with a utility class, not an inline width, so this asserts the
-    // class the constants were derived from.
+    // Product width overrides the installed library's 180px expanded utility.
     const { container, unmount } = renderNav({ collapsed: true });
-    expect(container.querySelector('nav')?.className).toContain('w-12');
+    expect(container.querySelector('nav')?.style.width).toBe('48px');
     unmount();
     const { container: expanded } = renderNav({ collapsed: false });
-    expect(expanded.querySelector('nav')?.className).toContain('w-45');
+    expect(expanded.querySelector('nav')?.style.width).toBe('240px');
   });
 });
 
@@ -280,5 +277,19 @@ describe('NavBarView collapse toggle', () => {
     const nav = screen.getByLabelText('Main navigation');
     await user.click(within(nav).getByRole('button', { name: 'Collapse' }));
     expect(onCollapsedChange).toHaveBeenCalledWith(true);
+  });
+});
+
+describe('NavBarLogo', () => {
+  it.each([false, true])('keeps the home logo accessible without a product menu when collapsed=%s', (collapsed) => {
+    const { container } = testRender(
+      <NavBarLogo collapsed={collapsed} logo="/wordmark.svg" logoCollapsed="/mark.svg" />,
+      { route: '/dashboard/telecom' },
+    );
+    const logoLink = screen.getByRole('link', { name: 'logo' });
+    expect(logoLink).toHaveAttribute('href', '/dashboard');
+    expect(logoLink.querySelector('img')).toHaveAttribute('src', collapsed ? '/mark.svg' : '/wordmark.svg');
+    expect(container.querySelector('[aria-haspopup]')).toBeNull();
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 });

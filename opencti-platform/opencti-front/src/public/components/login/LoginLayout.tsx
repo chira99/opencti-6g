@@ -2,60 +2,12 @@ import { Box, Stack, SxProps } from '@mui/material';
 import { useTheme } from '@mui/styles';
 import { PropsWithChildren } from 'react';
 import { Theme } from '../../../components/Theme';
-import logoFiligranBaselineDark from '../../../static/images/logo_filigran_baseline_dark.svg';
-import logoFiligranGradientDark from '../../../static/images/logo_filigran_gradient_dark.svg';
-import logoFiligranBaselineLight from '../../../static/images/logo_filigran_baseline_light.svg';
-import logoFiligranGradientLight from '../../../static/images/logo_filigran_gradient_light.svg';
 import SystemBanners from '../SystemBanners';
 import { LoginRootPublicQuery$data } from '../../__generated__/LoginRootPublicQuery.graphql';
 import LoginLogo from './LoginLogo';
+import PlatformAsideBranding from './PlatformAsideBranding';
 import { hasCustomColor } from '../../../utils/theme';
 import { getLoginAsideType } from '../../../private/components/settings/themes/theme-utils';
-
-const LogoBaseline = () => {
-  const theme = useTheme<Theme>();
-  const logoBaseline = theme.palette.mode === 'dark'
-    ? logoFiligranBaselineDark
-    : logoFiligranBaselineLight;
-
-  return (
-    <img
-      src={logoBaseline}
-      alt="Made by Filigran logo"
-      width={130}
-      style={{
-        userSelect: 'none',
-        pointerEvents: 'none',
-        position: 'absolute',
-        bottom: theme.spacing(3),
-        left: theme.spacing(3),
-        zIndex: 2,
-      }}
-    />
-  );
-};
-
-const LogoFiligran = () => {
-  const theme = useTheme<Theme>();
-  const logoGradient = theme.palette.mode === 'dark'
-    ? logoFiligranGradientDark
-    : logoFiligranGradientLight;
-
-  return (
-    <img
-      src={logoGradient}
-      alt="Filigran Logo"
-      style={{
-        userSelect: 'none',
-        pointerEvents: 'none',
-        height: `calc(100% + ${theme.spacing(10)})`,
-        position: 'absolute',
-        top: theme.spacing(-5),
-        right: theme.spacing(-5),
-      }}
-    />
-  );
-};
 
 interface LoginLayoutProps extends PropsWithChildren {
   settings: LoginRootPublicQuery$data['publicSettings'];
@@ -98,6 +50,7 @@ const LoginLayout = ({ settings, children }: LoginLayoutProps) => {
     : theme.palette.designSystem.background.main;
 
   const contentSx: SxProps = {
+    position: 'relative',
     minWidth: 500,
     overflow: 'hidden',
     background: backgroundContent,
@@ -106,6 +59,7 @@ const LoginLayout = ({ settings, children }: LoginLayoutProps) => {
   };
 
   const asideSx: SxProps = {
+    display: { xs: 'none', md: 'block' },
     background: getAsideBackground(),
     backgroundSize: loginAsideType === 'image' ? 'cover' : undefined,
     backgroundPosition: loginAsideType === 'image' ? 'center' : undefined,
@@ -126,10 +80,15 @@ const LoginLayout = ({ settings, children }: LoginLayoutProps) => {
         >
           <LoginLogo data={settings} />
           {children}
+          <Box sx={{ display: { xs: 'block', md: 'none' } }}>
+            <PlatformAsideBranding showWatermark={false} showAttribution={!isWhitemarkEnable} />
+          </Box>
         </Stack>
         <Box flex={1} sx={asideSx}>
-          {loginAsideType === '' && <LogoFiligran />}
-          {!isWhitemarkEnable && <LogoBaseline />}
+          <PlatformAsideBranding
+            showWatermark={loginAsideType === ''}
+            showAttribution={!isWhitemarkEnable}
+          />
         </Box>
       </Stack>
     </>

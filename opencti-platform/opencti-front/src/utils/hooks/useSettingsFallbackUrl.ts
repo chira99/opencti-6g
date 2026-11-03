@@ -1,3 +1,4 @@
+import useEnterpriseEdition from './useEnterpriseEdition';
 import useGranted, {
   SETTINGS_FILEINDEXING,
   SETTINGS_SECURITYACTIVITY,
@@ -18,8 +19,11 @@ import useGranted, {
 } from './useGranted';
 
 const useSettingsFallbackUrl = (): string => {
+  const isEnterpriseEdition = useEnterpriseEdition();
   const isGrantedToParameters = useGranted([SETTINGS_SETPARAMETERS]);
-  const isGrantedToSecurityAccess = useGranted([SETTINGS_SETACCESSES, VIRTUAL_ORGANIZATION_ADMIN]);
+  const hasSetAccesses = useGranted([SETTINGS_SETACCESSES]);
+  const hasVirtualOrganizationAdmin = useGranted([VIRTUAL_ORGANIZATION_ADMIN]);
+  const isGrantedToSecurityAccess = hasSetAccesses || (isEnterpriseEdition && hasVirtualOrganizationAdmin);
   const isGrantedToMarkingOnly = useGranted([SETTINGS_SETMARKINGS]);
   const isGrantedToDisseminationListOnly = useGranted([SETTINGS_SETDISSEMINATION]);
   const isGrantedToSsoOnly = useGranted([SETTINGS_SETAUTH]);
@@ -41,12 +45,12 @@ const useSettingsFallbackUrl = (): string => {
   if (isGrantedToParameters) return '/dashboard/settings';
   if (isGrantedToSecurityAccess) return '/dashboard/settings/accesses';
   if (isGrantedToMarkingOnly) return '/dashboard/settings/accesses/marking';
-  if (isGrantedToDisseminationListOnly) return '/dashboard/settings/accesses/dissemination_list';
+  if (isEnterpriseEdition && isGrantedToDisseminationListOnly) return '/dashboard/settings/accesses/dissemination_list';
   if (isGrantedToSsoOnly) return '/dashboard/settings/accesses/authentications';
   if (isGrantedToCustomization) return '/dashboard/settings/customization';
   if (isGrantedToTaxonomies) return '/dashboard/settings/vocabularies';
-  if (isGrantedToActivity) return '/dashboard/settings/activity';
-  if (isGrantedToFileIndexing) return '/dashboard/settings/file_indexing';
+  if (isGrantedToActivity) return isEnterpriseEdition ? '/dashboard/settings/activity' : '/dashboard/settings/activity/alerting';
+  if (isEnterpriseEdition && isGrantedToFileIndexing) return '/dashboard/settings/file_indexing';
   if (isGrantedToExperience) return '/dashboard/settings/experience';
   return '/dashboard';
 };

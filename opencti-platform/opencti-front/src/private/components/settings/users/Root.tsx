@@ -13,6 +13,7 @@ import UserDeletionDialog from './UserDeletionDialog';
 import UserEmailSend from './UserEmailSend';
 import Security from '../../../../utils/Security';
 import useGranted, { KNOWLEDGE_KNUPDATE_KNDELETE, SETTINGS_SETACCESSES, VIRTUAL_ORGANIZATION_ADMIN } from '../../../../utils/hooks/useGranted';
+import useEnterpriseEdition from '../../../../utils/hooks/useEnterpriseEdition';
 import ErrorNotFound from '../../../../components/ErrorNotFound';
 import Loader, { LoaderVariant } from '../../../../components/Loader';
 import User from './User';
@@ -103,6 +104,7 @@ const RootUserComponent = ({ queryRef, userId, refetch }: RootUserComponentProps
   const location = useLocation();
   const { t_i18n } = useFormatter();
   const canDelete = useGranted([KNOWLEDGE_KNUPDATE_KNDELETE]);
+  const isEnterpriseEdition = useEnterpriseEdition();
   const hasSetAccess = useGranted([SETTINGS_SETACCESSES]);
   const theme = useTheme<Theme>();
 
@@ -173,12 +175,16 @@ const RootUserComponent = ({ queryRef, userId, refetch }: RootUserComponentProps
               <TabsTrigger value={`/dashboard/settings/accesses/users/${data.id}`} asChild>
                 <Link to={`/dashboard/settings/accesses/users/${data.id}`}>{t_i18n('Overview')}</Link>
               </TabsTrigger>
-              <TabsTrigger value={`/dashboard/settings/accesses/users/${data.id}/analytics`} asChild>
-                <Link to={`/dashboard/settings/accesses/users/${data.id}/analytics`}>{t_i18n('Analytics')}</Link>
-              </TabsTrigger>
-              <TabsTrigger value={`/dashboard/settings/accesses/users/${data.id}/history`} asChild>
-                <Link to={`/dashboard/settings/accesses/users/${data.id}/history`}>{t_i18n('History')}</Link>
-              </TabsTrigger>
+              {isEnterpriseEdition && (
+                <>
+                  <TabsTrigger value={`/dashboard/settings/accesses/users/${data.id}/analytics`} asChild>
+                    <Link to={`/dashboard/settings/accesses/users/${data.id}/analytics`}>{t_i18n('Analytics')}</Link>
+                  </TabsTrigger>
+                  <TabsTrigger value={`/dashboard/settings/accesses/users/${data.id}/history`} asChild>
+                    <Link to={`/dashboard/settings/accesses/users/${data.id}/history`}>{t_i18n('History')}</Link>
+                  </TabsTrigger>
+                </>
+              )}
             </TabsList>
           </Tabs>
           <Routes>
@@ -188,18 +194,22 @@ const RootUserComponent = ({ queryRef, userId, refetch }: RootUserComponentProps
                 <User data={data} refetch={refetch} />
               }
             />
-            <Route
-              path="/analytics"
-              element={(
-                <UserAnalytics data={data} />
-              )}
-            />
-            <Route
-              path="/history"
-              element={(
-                <UserHistoryTab data={data} />
-              )}
-            />
+            {isEnterpriseEdition && (
+              <>
+                <Route
+                  path="/analytics"
+                  element={(
+                    <UserAnalytics data={data} />
+                  )}
+                />
+                <Route
+                  path="/history"
+                  element={(
+                    <UserHistoryTab data={data} />
+                  )}
+                />
+              </>
+            )}
           </Routes>
         </div>
       ) : (

@@ -1,13 +1,10 @@
-import React, { FunctionComponent, useContext, useEffect, useState } from 'react';
-import CircularProgress from '@mui/material/CircularProgress';
+import React, { FunctionComponent, useEffect, useState } from 'react';
 import makeStyles from '@mui/styles/makeStyles';
-import { FiligranLoader } from 'filigran-icon';
-import { useTheme } from '@mui/styles';
+import { Text } from '@filigran/design-system';
 import { interval } from 'rxjs';
-import Typography from '@mui/material/Typography';
-import { UserContext } from '../utils/hooks/useAuth';
-import type { Theme } from './Theme';
 import { TEN_SECONDS } from '../utils/Time';
+import { PLATFORM_MARK } from '../utils/platformBranding';
+import './Loader.css';
 
 const interval$ = interval(TEN_SECONDS);
 
@@ -40,10 +37,6 @@ const useStyles = makeStyles(() => ({
     verticalAlign: 'middle',
     textAlign: 'center',
   },
-  loaderCircle: {
-    width: '5rem',
-    display: 'inline-block',
-  },
 }));
 
 export enum LoaderVariant {
@@ -66,55 +59,53 @@ const Loader: FunctionComponent<LoaderProps> = ({
   rotatingTexts,
 }) => {
   const classes = useStyles();
-  const theme = useTheme<Theme>();
-  const { settings } = useContext(UserContext);
   const [currentText, setCurrentText] = useState(0);
-  // if you have EE and whitemark set, you can remove the loader
-  const hasFiligranLoader = theme && !(settings?.platform_enterprise_edition?.license_validated && settings?.platform_whitemark);
-  if (rotatingTexts && rotatingTexts.length > 0) {
-    useEffect(() => {
-      const subscription = interval$.subscribe(() => {
-        if (currentText === rotatingTexts.length - 1) {
-          setCurrentText(0);
-        } else {
-          setCurrentText(currentText + 1);
-        }
-      });
-      return () => {
-        subscription.unsubscribe();
-      };
+  const textCount = rotatingTexts?.length ?? 0;
+
+  useEffect(() => {
+    if (textCount < 2) return undefined;
+    const subscription = interval$.subscribe(() => {
+      setCurrentText((index) => (index + 1) % textCount);
     });
-  }
-  if (variant === 'inline') {
+    return () => subscription.unsubscribe();
+  }, [textCount]);
+
+  const markSize = variant === LoaderVariant.inline ? 24 : variant === LoaderVariant.inElement ? 40 : 80;
+  const content = (
+    <>
+      <img
+        src={PLATFORM_MARK}
+        alt=""
+        aria-hidden="true"
+        width={markSize}
+        height={markSize}
+        className="cti-loader__mark"
+        draggable={false}
+      />
+      {textCount > 0 && (
+        <Text as="span" variant="content-compact" style={{ display: 'block' }}>
+          {rotatingTexts?.[currentText % textCount]}...
+        </Text>
+      )}
+    </>
+  );
+
+  if (variant === LoaderVariant.inline) {
     return (
       <div
         role="progressbar"
         aria-label="Loading..."
         style={{ display: 'inline-flex', width: '4rem', height: 35, alignItems: 'center', justifyContent: 'center' }}
       >
-        {hasFiligranLoader ? (
-          <FiligranLoader height={24} color={theme?.palette?.common?.grey} />
-        ) : (
-          <CircularProgress
-            aria-hidden
-            size={24}
-            thickness={1}
-            className={classes.loaderCircle}
-          />
-        )}
-        {rotatingTexts && rotatingTexts.length > 0 && (
-          <Typography variant="body2">
-            {rotatingTexts[currentText]}...
-          </Typography>
-        )}
+        {content}
       </div>
     );
   }
   return (
     <div
-      className={variant === 'inElement' ? classes.containerInElement : classes.container}
+      className={variant === LoaderVariant.inElement ? classes.containerInElement : classes.container}
       style={
-        variant === 'inElement'
+        variant === LoaderVariant.inElement
           ? {
               paddingRight: withRightPadding ? 200 : 0,
               marginTop: withTopMargin ? 200 : 0,
@@ -126,29 +117,15 @@ const Loader: FunctionComponent<LoaderProps> = ({
         role="progressbar"
         aria-label="Loading..."
         className={
-          variant === 'inElement' ? classes.loaderInElement : classes.loader
+          variant === LoaderVariant.inElement ? classes.loaderInElement : classes.loader
         }
         style={
-          variant !== 'inElement'
+          variant !== LoaderVariant.inElement
             ? { paddingRight: withRightPadding ? 100 : 0 }
             : {}
         }
       >
-        {hasFiligranLoader ? (
-          <FiligranLoader height={variant === 'inElement' ? 40 : 80} color={theme?.palette?.common?.grey} />
-        ) : (
-          <CircularProgress
-            aria-hidden
-            size={variant === 'inElement' ? 40 : 80}
-            thickness={1}
-            className={classes.loaderCircle}
-          />
-        )}
-        {rotatingTexts && rotatingTexts.length > 0 && (
-          <Typography variant="body2">
-            {rotatingTexts[currentText]}...
-          </Typography>
-        )}
+        {content}
       </div>
     </div>
   );

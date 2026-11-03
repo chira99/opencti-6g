@@ -1,13 +1,10 @@
 import Button from '@common/button/Button';
 import IconButton from '@common/button/IconButton';
 import Dialog from '@common/dialog/Dialog';
-import FeedbackCreation from '@components/cases/feedbacks/FeedbackCreation';
 import AISummaryActivity from '@components/common/ai/AISummaryActivity';
 import AISummaryContainers from '@components/common/ai/AISummaryContainers';
 import AISummaryForecast from '@components/common/ai/AISummaryForecast';
 import AISummaryHistory from '@components/common/ai/AISummaryHistory';
-import EEChip from '@components/common/entreprise_edition/EEChip';
-import EnterpriseEditionAgreement from '@components/common/entreprise_edition/EnterpriseEditionAgreement';
 import ValidateTermsOfUseDialog from '@components/settings/ValidateTermsOfUseDialog';
 import FiligranIcon from '@components/common/FiligranIcon';
 import { Combobox, ComboboxContent, ComboboxControls, ComboboxField, ComboboxInput, ComboboxTrigger, Tabs, TabsContent, TabsList, TabsTrigger } from '@filigran/design-system';
@@ -133,12 +130,11 @@ interface AiInsightButtonProps {
   onlyIcon?: boolean;
   floating?: boolean;
   onClick: () => void;
-  showEEChip?: boolean;
   disabled?: boolean;
   tooltipTitle?: string;
 }
 
-const AiInsightButton = ({ onlyIcon = false, floating = false, onClick, showEEChip = false, disabled = false, tooltipTitle }: AiInsightButtonProps) => {
+const AiInsightButton = ({ onlyIcon = false, floating = false, onClick, disabled = false, tooltipTitle }: AiInsightButtonProps) => {
   const { t_i18n } = useFormatter();
   const { bannerSettings: { bannerHeightNumber } } = useAuth();
   const classes = useStyles({ bannerHeightNumber });
@@ -172,7 +168,6 @@ const AiInsightButton = ({ onlyIcon = false, floating = false, onClick, showEECh
             disabled={disabled}
           >
             {t_i18n('AI Insights')}
-            {showEEChip && <EEChip feature="AI Insights" size="sm" />}
           </Button>
         )}
       </span>
@@ -187,12 +182,11 @@ const AIInsights = ({
   onlyIcon = false,
   isContainer = false,
 }: AIInsightProps) => {
-  const { bannerSettings: { bannerHeightNumber }, settings: { id: settingsId } } = useAuth();
+  const { bannerSettings: { bannerHeightNumber } } = useAuth();
   const classes = useStyles({ bannerHeightNumber });
   const isEnterpriseEdition = useEnterpriseEdition();
   const { t_i18n } = useFormatter();
   const [display, setDisplay] = useState(false);
-  const [displayEEDialog, setDisplayEEDialog] = useState(false);
   const [displayAIDialog, setDisplayAIDialog] = useState(false);
   const [displayCGUDialog, setDisplayCGUDialog] = useState(false);
   const [currentTab, setCurrentTab] = useState(defaultTab);
@@ -218,7 +212,7 @@ const AIInsights = ({
   const [loadingAgents, setLoadingAgents] = useState(true);
 
   useEffect(() => {
-    if (!useXtmOne) {
+    if (!isEnterpriseEdition || !useXtmOne) {
       setLoadingAgents(false);
       return;
     }
@@ -233,7 +227,7 @@ const AIInsights = ({
       }
       setLoadingAgents(false);
     });
-  }, [useXtmOne, currentTab]);
+  }, [isEnterpriseEdition, useXtmOne, currentTab]);
 
   const handleAgentChange = (newValue: AgentOption | null) => {
     if (newValue) {
@@ -273,35 +267,7 @@ const AIInsights = ({
   const [containersFiltersState] = useFiltersState(initialContainersFilters);
   // the filters state carries frontend-only ids the FilterGroup input rejects
   const containersFilters = useMemo(() => canonicalizeFilterGroupForBackend(containersFiltersState), [containersFiltersState]);
-  if (!enabled) return null;
-  if (!isEnterpriseEdition && enabled) {
-    return (
-      <>
-        <AiInsightButton
-          onlyIcon={onlyIcon}
-          onClick={() => setDisplayEEDialog(true)}
-          showEEChip
-        />
-
-        {isAdmin ? (
-          <EnterpriseEditionAgreement
-            open={displayEEDialog}
-            onClose={() => setDisplayEEDialog(false)}
-            settingsId={settingsId}
-          />
-        ) : (
-          <FeedbackCreation
-            openDrawer={displayEEDialog}
-            handleCloseDrawer={() => setDisplayEEDialog(false)}
-            initialValue={{
-              description: t_i18n('I would like to use a EE feature AI Summary but I don\'t have EE activated.\nI would like to discuss with you about activating EE.'),
-            }}
-          />
-        )}
-      </>
-    );
-  }
-
+  if (!isEnterpriseEdition || !enabled) return null;
   if (isEnterpriseEdition && !fullyActive && !useXtmOne) {
     return (
       <>

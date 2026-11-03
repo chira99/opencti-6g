@@ -105,6 +105,7 @@ const StixCoreObjectSharing: FunctionComponent<ContainerHeaderSharedProps> = ({
     </span>
   );
   // If user not an organization organizer, return empty div
+  if (!isEnterpriseEdition) return null;
   if (!userIsOrganizationEditor) {
     return variant === 'header' ? (
       <div style={{ display: 'inline-block' }} />

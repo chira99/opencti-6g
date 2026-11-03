@@ -65,128 +65,132 @@ const TransitionForm = ({ entityType }: { entityType: string }) => {
     <>
       <Field component={TextField} variant="outlined" name="event" label={t_i18n('Transition name')} fullWidth />
 
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 2 }}>
-        <Typography variant="h6">
-          {t_i18n('Conditions')} <EEChip feature={t_i18n(FEATURE_NAME)} />
-        </Typography>
-        {values.conditions && (
-          <Box style={disabledEEStyle}>
-            <Field name={WorkflowDataType.conditions} component={WorkflowConditionFilters} entityType={entityType} />
-          </Box>
-        )}
-      </Box>
-
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, marginTop: 1 }}>
-        <Typography variant="h6">
-          {t_i18n('Organization sharing')} <EEChip feature={t_i18n(FEATURE_NAME)} />
-        </Typography>
-        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-          <FormControlLabel
-            control={(
-              <Switch
-                checked={hasShare}
-                disabled={!isEnterpriseEdition}
-                onChange={(e) => handleToggleAsyncAction(WorkflowActionType.shareWithOrganizations, e.target.checked)}
-              />
-            )}
-            label={t_i18n('Share with organizations')}
-          />
-          {hasShare && (
-            <Box sx={{ pl: 4, pb: 1 }}>
-              <ObjectOrganizationField
-                name={`asyncActions.${shareIdx}.params.organizations`}
-                label="Organizations (empty = ask at trigger time)"
-                outlined={false}
-                multiple={true}
-                style={{ width: '100%' }}
-                alert={false}
-                disabled={!isEnterpriseEdition}
-              />
-            </Box>
-          )}
-          <FormControlLabel
-            control={(
-              <Switch
-                checked={hasUnshare}
-                disabled={!isEnterpriseEdition}
-                onChange={(e) => handleToggleAsyncAction(WorkflowActionType.unshareFromOrganizations, e.target.checked)}
-              />
-            )}
-            label={t_i18n('Unshare from organizations')}
-          />
-          {hasUnshare && (
-            <Box sx={{ pl: 4, pb: 1 }}>
-              <ObjectOrganizationField
-                name={`asyncActions.${unshareIdx}.params.organizations`}
-                label="Organizations (empty = ask at trigger time)"
-                outlined={false}
-                multiple={true}
-                style={{ width: '100%' }}
-                alert={false}
-                disabled={!isEnterpriseEdition}
-              />
-            </Box>
-          )}
-        </Box>
-      </Box>
-
-      {AUTHORIZED_MEMBERS_ENTITY_TYPES.includes(entityType) && (
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, marginTop: 1 }}>
-          <Typography variant="h6">
-            {t_i18n('Authorized members')} <EEChip feature={t_i18n(FEATURE_NAME)} />
-          </Typography>
-          <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-            <FormControlLabel
-              control={(
-                <Switch
-                  checked={hasUpdateAuthorizedMembers}
-                  disabled={!isEnterpriseEdition}
-                  onChange={(e) => handleToggleAction(WorkflowActionType.updateAuthorizedMembers, e.target.checked)}
-                />
-              )}
-              label={t_i18n('Update authorized members')}
-            />
-            {values.syncActions && (
+      {isEnterpriseEdition && (
+        <>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 2 }}>
+            <Typography variant="h6">
+              {t_i18n('Conditions')} <EEChip feature={t_i18n(FEATURE_NAME)} />
+            </Typography>
+            {values.conditions && (
               <Box style={disabledEEStyle}>
-                <WorkflowFieldList name={WorkflowDataType.syncActions} />
+                <Field name={WorkflowDataType.conditions} component={WorkflowConditionFilters} entityType={entityType} />
               </Box>
             )}
           </Box>
-        </Box>
-      )}
 
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, marginTop: 1 }}>
-        <Typography variant="h6">
-          {t_i18n('Comment')} <EEChip feature={t_i18n(FEATURE_NAME)} />
-        </Typography>
-        <Alert severity="info" variant="outlined" style={{ opacity: isEnterpriseEdition ? 1 : 0.5 }}>
-          {t_i18n('When enabled, users will be prompted to leave a comment when changing the status.')}
-        </Alert>
-        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-          <FormControlLabel
-            control={(
-              <Switch
-                checked={enableComments}
-                onChange={(e) => handleToggleEnableComments(e.target.checked)}
-                disabled={!isEnterpriseEdition}
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, marginTop: 1 }}>
+            <Typography variant="h6">
+              {t_i18n('Organization sharing')} <EEChip feature={t_i18n(FEATURE_NAME)} />
+            </Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+              <FormControlLabel
+                control={(
+                  <Switch
+                    checked={hasShare}
+                    disabled={!isEnterpriseEdition}
+                    onChange={(e) => handleToggleAsyncAction(WorkflowActionType.shareWithOrganizations, e.target.checked)}
+                  />
+                )}
+                label={t_i18n('Share with organizations')}
               />
-            )}
-            label={t_i18n('Enable comment')}
-          />
-          <Box sx={{ pl: 4 }}>
-            <FormControlLabel
-              control={(
-                <Switch
-                  checked={requireComments}
-                  disabled={!enableComments}
-                  onChange={(e) => handleToggleRequireComments(e.target.checked)}
-                />
+              {hasShare && (
+                <Box sx={{ pl: 4, pb: 1 }}>
+                  <ObjectOrganizationField
+                    name={`asyncActions.${shareIdx}.params.organizations`}
+                    label="Organizations (empty = ask at trigger time)"
+                    outlined={false}
+                    multiple={true}
+                    style={{ width: '100%' }}
+                    alert={false}
+                    disabled={!isEnterpriseEdition}
+                  />
+                </Box>
               )}
-              label={t_i18n('Required')}
-            />
+              <FormControlLabel
+                control={(
+                  <Switch
+                    checked={hasUnshare}
+                    disabled={!isEnterpriseEdition}
+                    onChange={(e) => handleToggleAsyncAction(WorkflowActionType.unshareFromOrganizations, e.target.checked)}
+                  />
+                )}
+                label={t_i18n('Unshare from organizations')}
+              />
+              {hasUnshare && (
+                <Box sx={{ pl: 4, pb: 1 }}>
+                  <ObjectOrganizationField
+                    name={`asyncActions.${unshareIdx}.params.organizations`}
+                    label="Organizations (empty = ask at trigger time)"
+                    outlined={false}
+                    multiple={true}
+                    style={{ width: '100%' }}
+                    alert={false}
+                    disabled={!isEnterpriseEdition}
+                  />
+                </Box>
+              )}
+            </Box>
           </Box>
-        </Box>
-      </Box>
+
+          {AUTHORIZED_MEMBERS_ENTITY_TYPES.includes(entityType) && (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, marginTop: 1 }}>
+              <Typography variant="h6">
+                {t_i18n('Authorized members')} <EEChip feature={t_i18n(FEATURE_NAME)} />
+              </Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                <FormControlLabel
+                  control={(
+                    <Switch
+                      checked={hasUpdateAuthorizedMembers}
+                      disabled={!isEnterpriseEdition}
+                      onChange={(e) => handleToggleAction(WorkflowActionType.updateAuthorizedMembers, e.target.checked)}
+                    />
+                  )}
+                  label={t_i18n('Update authorized members')}
+                />
+                {values.syncActions && (
+                  <Box style={disabledEEStyle}>
+                    <WorkflowFieldList name={WorkflowDataType.syncActions} />
+                  </Box>
+                )}
+              </Box>
+            </Box>
+          )}
+
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, marginTop: 1 }}>
+            <Typography variant="h6">
+              {t_i18n('Comment')} <EEChip feature={t_i18n(FEATURE_NAME)} />
+            </Typography>
+            <Alert severity="info" variant="outlined" style={{ opacity: isEnterpriseEdition ? 1 : 0.5 }}>
+              {t_i18n('When enabled, users will be prompted to leave a comment when changing the status.')}
+            </Alert>
+            <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+              <FormControlLabel
+                control={(
+                  <Switch
+                    checked={enableComments}
+                    onChange={(e) => handleToggleEnableComments(e.target.checked)}
+                    disabled={!isEnterpriseEdition}
+                  />
+                )}
+                label={t_i18n('Enable comment')}
+              />
+              <Box sx={{ pl: 4 }}>
+                <FormControlLabel
+                  control={(
+                    <Switch
+                      checked={requireComments}
+                      disabled={!enableComments}
+                      onChange={(e) => handleToggleRequireComments(e.target.checked)}
+                    />
+                  )}
+                  label={t_i18n('Required')}
+                />
+              </Box>
+            </Box>
+          </Box>
+        </>
+      )}
 
       {entityType === 'DraftWorkspace' && (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, marginTop: 1 }}>

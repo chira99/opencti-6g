@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import useFdsThemeScope from './useFdsThemeScope';
 import { isLightThemeName } from '../themeName';
 import { FDS } from '../../components/fds-tokens.generated';
+import { RESEARCH_THEME_PRESETS } from '../researchThemes';
 
 describe('Hook: useFdsThemeScope', () => {
   const root = () => document.documentElement;
@@ -20,6 +21,30 @@ describe('Hook: useFdsThemeScope', () => {
    * static/css/custom-theme-tokens.test.ts.
    */
   const token = (name: string) => root().style.getPropertyValue(name);
+
+  it('switches the selected light and dark presets without stale classes or palette tokens', () => {
+    const values = (preset: typeof RESEARCH_THEME_PRESETS[number]) => ({
+      name: preset.name,
+      custom: {
+        background: preset.theme.theme_background,
+        paper: preset.theme.theme_paper,
+        nav: preset.theme.theme_nav,
+        primary: preset.theme.theme_primary,
+        text: preset.theme.theme_text_color,
+      },
+    });
+    const { rerender } = renderHook(
+      ({ name, custom }) => useFdsThemeScope(name, custom),
+      { initialProps: values(RESEARCH_THEME_PRESETS[0]) },
+    );
+    for (const preset of [...RESEARCH_THEME_PRESETS, RESEARCH_THEME_PRESETS[1]]) {
+      rerender(values(preset));
+      expect(root().classList.contains(preset.mode)).toBe(true);
+      expect(root().classList.contains(preset.mode === 'light' ? 'dark' : 'light')).toBe(false);
+      expect(token('--bg-elevation-default-layer-0')).toBe(preset.theme.theme_background);
+      expect(token('--color-filigran-brand-primary')).toBe(preset.theme.theme_primary);
+    }
+  });
 
   it('writes the class on the document root, not on a container', () => {
     renderHook(() => useFdsThemeScope('Light'));

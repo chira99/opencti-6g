@@ -10,6 +10,8 @@ import { List, ListItemButton, Stack } from '@mui/material';
 import Box from '@mui/material/Box';
 import { useFormatter } from '../../../../components/i18n';
 import useAuth from '../../../../utils/hooks/useAuth';
+import useEnterpriseEdition from '../../../../utils/hooks/useEnterpriseEdition';
+import { getCommunityEditionRedirect } from '../../../../utils/communityEdition';
 import { useSettingsMessagesBannerHeight } from '../../settings/settings_messages/SettingsMessagesBanner';
 import { Theme } from '../../../../components/Theme';
 import { useTheme } from '@mui/styles';
@@ -74,6 +76,8 @@ const NavToolbarMenu: FunctionComponent<{ entries: MenuEntry[] }> = ({ entries }
   const { t_i18n } = useFormatter();
   const location = useLocation();
   const { bannerSettings } = useAuth();
+  const isEnterpriseEdition = useEnterpriseEdition();
+  const visibleEntries = entries.filter((entry) => isEnterpriseEdition || (!entry.isEE && !getCommunityEditionRedirect(entry.path)));
   const settingsMessagesBannerHeight = useSettingsMessagesBannerHeight();
   const { height: topBannerHeight } = useTopBanner();
 
@@ -97,11 +101,12 @@ const NavToolbarMenu: FunctionComponent<{ entries: MenuEntry[] }> = ({ entries }
   };
 
   const theme = useTheme<Theme>();
+  if (visibleEntries.length === 0) return null;
   return (
     <StyledDrawer variant="permanent" anchor="right">
       <ToolbarSpacer />
       <List component="nav" style={{ marginTop: bannerHeight + settingsMessagesBannerHeight + topBannerHeight, marginBottom: bannerHeight }}>
-        {entries.map((entry, idx) => {
+        {visibleEntries.map((entry, idx) => {
           const isSelected = location.pathname.startsWith(entry.path);
           const iconColor = isSelected ? theme.palette.text.light : theme.palette.text.tertiary;
           const iconOpacity = isSelected ? 1 : 0.5;

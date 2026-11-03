@@ -18,10 +18,13 @@ import EnterpriseEditionButton from '@components/common/entreprise_edition/Enter
 import { useFormatter } from '../../../../components/i18n';
 import useSensitiveModifications from '../../../../utils/hooks/useSensitiveModifications';
 import Card from '@common/card/Card';
+import useEnterpriseEdition from '../../../../utils/hooks/useEnterpriseEdition';
 
 const EnterpriseEdition = ({ title, message, feature }: { title?: string; message?: string; feature?: string }) => {
   const { isSensitive, isAllowed } = useSensitiveModifications('ce_ee_toggle');
   const { t_i18n } = useFormatter();
+  const isEnterpriseEdition = useEnterpriseEdition();
+  if (!isEnterpriseEdition) return null;
   return (
     <>
       <Card title={title ? t_i18n(title) : ''}>

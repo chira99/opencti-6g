@@ -23,7 +23,6 @@ import SSOSingletonStrategies from '@components/settings/sso_definitions/SSOSing
 import AuthenticationGlobalSettings from '@components/settings/sso_definitions/AuthenticationGlobalSettings';
 import IpWhitelistSettings from '@components/settings/sso_definitions/IpWhitelistSettings';
 import useEnterpriseEdition from '../../../../utils/hooks/useEnterpriseEdition';
-import EEChip from '@components/common/entreprise_edition/EEChip';
 import EditOutlined from '@mui/icons-material/EditOutlined';
 import ListOutlined from '@mui/icons-material/ListOutlined';
 import { IconButton } from '@filigran/design-system';
@@ -202,17 +201,13 @@ const SSODefinitionsPolling = ({ queryRef, loadQuery, queryPaginationOptions, la
   return null;
 };
 
-const SSODefinitions = () => {
+const EnterpriseSSOProviders = () => {
   const { t_i18n } = useFormatter();
-  const isEnterpriseEdition = useEnterpriseEdition();
-  const { setTitle } = useConnectedDocumentModifier();
-  setTitle(t_i18n('Authentication | Security | Settings'));
 
   const [editingSSO, setEditingSSO] = useState<EditingSSO | null>(null);
   const [logsDrawerProviderId, setLogsDrawerProviderId] = useState<string | null>(null);
   const [lastProviderUpdateAt, setLastProviderUpdateAt] = useState<number | null>(null);
   const [providerIdsShowingAsStarting, setProviderIdsShowingAsStarting] = useState<Set<string>>(new Set());
-  const { settings } = useAuth();
 
   const handleProviderUpdated = React.useCallback((providerId: string) => {
     setLastProviderUpdateAt(Date.now());
@@ -294,7 +289,6 @@ const SSODefinitions = () => {
                   : undefined
               }
             />
-            {!isEnterpriseEdition && <EEChip />}
           </Box>
         );
       },
@@ -318,99 +312,104 @@ const SSODefinitions = () => {
   } as UsePreloadedPaginationFragment<SSODefinitionsLinesPaginationQuery>;
 
   return (
+    <>
+      {queryRef && (
+        <>
+          <SSODefinitionsPolling
+            queryRef={queryRef as PreloadedQuery<SSODefinitionsLinesPaginationQueryType>}
+            loadQuery={loadQuery as (vars: SSODefinitionsLinesPaginationQuery$variables, opts?: { fetchPolicy?: 'store-and-network' }) => void}
+            queryPaginationOptions={queryPaginationOptions as unknown as SSODefinitionsLinesPaginationQuery$variables}
+            lastProviderUpdateAt={lastProviderUpdateAt}
+            onRefreshQuery={clearProviderIdsShowingAsStarting}
+          />
+          <DataTable
+            dataColumns={dataColumns}
+            resolvePath={(data: SSODefinitionsLines_data$data) => data.authenticationProviders?.edges?.map((e) => e?.node)}
+            storageKey={LOCAL_STORAGE_KEY}
+            initialValues={initialValues}
+            contextFilters={contextFilters}
+            lineFragment={ssoDefinitionsLineFragment}
+            preloadedPaginationProps={preloadedPaginationProps}
+            entityTypes={['AuthenticationProvider']}
+            searchContextFinal={{ entityTypes: ['AuthenticationProvider'] }}
+            disableToolBar
+            disableColumnMenu
+            removeSelectAll
+            disableLineSelection
+            disableNavigation
+            onLineClick={handleOpenEdition}
+            actionsColumnWidth={72}
+            actions={(node: SSODefinitionEditionFragment$data) => (
+              <>
+                <Tooltip title={t_i18n('Update')}>
+                  <IconButton
+                    variant="default"
+                    priority="tertiary"
+                    size="sm"
+                    aria-label={t_i18n('Update')}
+                    icon={<EditOutlined fontSize="small" />}
+                  />
+                </Tooltip>
+                <Tooltip title={t_i18n('Logs')}>
+                  <IconButton
+                    variant="default"
+                    priority="tertiary"
+                    size="sm"
+                    onClick={(e) => handleOpenLogs(e, node)}
+                    aria-label={t_i18n('Logs')}
+                    icon={<ListOutlined fontSize="small" />}
+                  />
+                </Tooltip>
+              </>
+            )}
+            createButton={<SSODefinitionCreation paginationOptions={queryPaginationOptions} availableSecrets={availableSecrets} />}
+          />
+        </>
+      )}
+      {editingSSO && (
+        <SSODefinitionEdition
+          isOpen={!!editingSSO}
+          onClose={() => setEditingSSO(null)}
+          data={editingSSO.data}
+          paginationOptions={queryPaginationOptions}
+          onProviderUpdated={handleProviderUpdated}
+          availableSecrets={availableSecrets}
+        />
+      )}
+      {logsDrawerProviderId && (
+        <AuthProviderLogsDrawer
+          isOpen={!!logsDrawerProviderId}
+          onClose={() => setLogsDrawerProviderId(null)}
+          providerId={logsDrawerProviderId}
+        />
+      )}
+    </>
+  );
+};
+
+const SSODefinitions = () => {
+  const { t_i18n } = useFormatter();
+  const isEnterpriseEdition = useEnterpriseEdition();
+  const { settings } = useAuth();
+  const { setTitle } = useConnectedDocumentModifier();
+  setTitle(t_i18n('Authentication | Security | Settings'));
+
+  return (
     <div style={{ paddingRight: '200px' }}>
       <Breadcrumbs elements={[
         { label: t_i18n('Settings') },
         { label: t_i18n('Security') },
         { label: t_i18n('Authentications'), current: true }]}
       />
+      <AuthenticationGlobalSettings />
+      <IpWhitelistSettings />
+      <SSOSingletonStrategies />
       {settings.is_authentication_by_env && (
-        <>
-          <AuthenticationGlobalSettings />
-          <IpWhitelistSettings />
-          <SSOSingletonStrategies />
-          <Alert severity="info" variant="outlined" sx={{ mt: 2 }}>
-            {t_i18n('Your platform is currently using environment variables to define authentication strategies. As a result, any update on any strategies (except password policy or 2FA) won\'t be taken into account.')}
-          </Alert>
-        </>
+        <Alert severity="info" variant="outlined" sx={{ mt: 2 }}>
+          {t_i18n('Your platform is currently using environment variables to define authentication strategies. As a result, any update on any strategies (except password policy or 2FA) won\'t be taken into account.')}
+        </Alert>
       )}
-      {!settings.is_authentication_by_env && (
-        <>
-          <AuthenticationGlobalSettings />
-          <IpWhitelistSettings />
-          <SSOSingletonStrategies />
-          {queryRef && (
-            <>
-              <SSODefinitionsPolling
-                queryRef={queryRef as PreloadedQuery<SSODefinitionsLinesPaginationQueryType>}
-                loadQuery={loadQuery as (vars: SSODefinitionsLinesPaginationQuery$variables, opts?: { fetchPolicy?: 'store-and-network' }) => void}
-                queryPaginationOptions={queryPaginationOptions as unknown as SSODefinitionsLinesPaginationQuery$variables}
-                lastProviderUpdateAt={lastProviderUpdateAt}
-                onRefreshQuery={clearProviderIdsShowingAsStarting}
-              />
-              <DataTable
-                dataColumns={dataColumns}
-                resolvePath={(data: SSODefinitionsLines_data$data) => data.authenticationProviders?.edges?.map((e) => e?.node)}
-                storageKey={LOCAL_STORAGE_KEY}
-                initialValues={initialValues}
-                contextFilters={contextFilters}
-                lineFragment={ssoDefinitionsLineFragment}
-                preloadedPaginationProps={preloadedPaginationProps}
-                entityTypes={['AuthenticationProvider']}
-                searchContextFinal={{ entityTypes: ['AuthenticationProvider'] }}
-                disableToolBar
-                disableColumnMenu
-                removeSelectAll
-                disableLineSelection
-                disableNavigation
-                onLineClick={handleOpenEdition}
-                actionsColumnWidth={72}
-                actions={(node: SSODefinitionEditionFragment$data) => (
-                  <>
-                    <Tooltip title={t_i18n('Update')}>
-                      <IconButton
-                        variant="default"
-                        priority="tertiary"
-                        size="sm"
-                        aria-label={t_i18n('Update')}
-                        icon={<EditOutlined fontSize="small" />}
-                      />
-                    </Tooltip>
-                    <Tooltip title={t_i18n('Logs')}>
-                      <IconButton
-                        variant="default"
-                        priority="tertiary"
-                        size="sm"
-                        onClick={(e) => handleOpenLogs(e, node)}
-                        aria-label={t_i18n('Logs')}
-                        icon={<ListOutlined fontSize="small" />}
-                      />
-                    </Tooltip>
-                  </>
-                )}
-                createButton={<SSODefinitionCreation paginationOptions={queryPaginationOptions} availableSecrets={availableSecrets} />}
-              />
-            </>
-          )}
-          {editingSSO && (
-            <SSODefinitionEdition
-              isOpen={!!editingSSO}
-              onClose={() => setEditingSSO(null)}
-              data={editingSSO.data}
-              paginationOptions={queryPaginationOptions}
-              onProviderUpdated={handleProviderUpdated}
-              availableSecrets={availableSecrets}
-            />
-          )}
-          {logsDrawerProviderId && (
-            <AuthProviderLogsDrawer
-              isOpen={!!logsDrawerProviderId}
-              onClose={() => setLogsDrawerProviderId(null)}
-              providerId={logsDrawerProviderId}
-            />
-          )}
-        </>
-      )}
+      {isEnterpriseEdition && !settings.is_authentication_by_env && <EnterpriseSSOProviders />}
     </div>
   );
 };

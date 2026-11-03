@@ -63,6 +63,7 @@ import {
 import React from 'react';
 import { useFormatter } from '../../../components/i18n';
 import useAuth from '../../../utils/hooks/useAuth';
+import useEnterpriseEdition from '../../../utils/hooks/useEnterpriseEdition';
 import { useHiddenEntities, useIsHiddenEntities } from '../../../utils/hooks/useEntitySettings';
 import useGranted, {
   AUTOMATION_AUTMANAGE,
@@ -129,6 +130,7 @@ export interface RawNavGroup {
 
 const useNavMenu = (): NavGroup[] => {
   const { t_i18n } = useFormatter();
+  const isEnterpriseEdition = useEnterpriseEdition();
   const { me: { draftContext } } = useAuth();
   const { isFeatureEnable, isTrashEnable } = useHelper();
   const { hasOnlyAccessToImportDraftTab } = useImportAccess();
@@ -136,7 +138,9 @@ const useNavMenu = (): NavGroup[] => {
 
   const isGrantedToKnowledge = useGranted([KNOWLEDGE]);
   const isGrantedToImport = useGranted([KNOWLEDGE_KNASKIMPORT]) || hasOnlyAccessToImportDraftTab;
-  const isGrantedToProcessing = useGranted([KNOWLEDGE_KNUPDATE, AUTOMATION_AUTMANAGE, CSVMAPPERS]);
+  const isGrantedToCommunityProcessing = useGranted([KNOWLEDGE_KNUPDATE, CSVMAPPERS]);
+  const isGrantedToAutomation = useGranted([AUTOMATION_AUTMANAGE]);
+  const isGrantedToProcessing = isGrantedToCommunityProcessing || (isEnterpriseEdition && isGrantedToAutomation);
   const isGrantedToSharing = useGranted([TAXIIAPI]);
   const isGrantedToManage = useGranted([BYPASS]);
   const isGrantedToParameters = useGranted([SETTINGS_SETPARAMETERS]);
@@ -150,39 +154,31 @@ const useNavMenu = (): NavGroup[] => {
     || isGrantedToKillChainPhases
     || isGrantedToCaseTemplates
     || isGrantedToStatusTemplates;
-  const isGrantedToFileIndexing = useGranted([SETTINGS_FILEINDEXING]);
+  const isGrantedToFileIndexing = useGranted([SETTINGS_FILEINDEXING]) && isEnterpriseEdition;
   const isGrantedToExperience = useGranted([SETTINGS_SETPARAMETERS, SETTINGS_SUPPORT, SETTINGS_SETMANAGEXTMHUB]);
   const isGrantedToDelete = useGranted([KNOWLEDGE_KNUPDATE_KNDELETE]);
-  const isOrganizationAdmin = useGranted([VIRTUAL_ORGANIZATION_ADMIN]);
+  const isOrganizationAdmin = useGranted([VIRTUAL_ORGANIZATION_ADMIN]) && isEnterpriseEdition;
   const isGrantedToCustomization = useGranted([SETTINGS_SETCUSTOMIZATION]);
-  const isGrantedToSecurity = useGranted([SETTINGS_SETMARKINGS, SETTINGS_SETACCESSES, SETTINGS_SETDISSEMINATION, SETTINGS_SETAUTH]);
+  const isGrantedToCommunitySecurity = useGranted([SETTINGS_SETMARKINGS, SETTINGS_SETACCESSES, SETTINGS_SETAUTH]);
+  const isGrantedToDissemination = useGranted([SETTINGS_SETDISSEMINATION]);
+  const isGrantedToSecurity = isGrantedToCommunitySecurity || (isEnterpriseEdition && isGrantedToDissemination);
   const isGrantedToAudit = useGranted([SETTINGS_SECURITYACTIVITY]);
   const isDataHealthEnabled = isFeatureEnable('DATA_SANITY_MANAGER');
 
   const canSeeExplore = useGranted([EXPLORE]);
   const canSeeInvestigation = useGranted([INVESTIGATION]);
-  const canSeePir = useGranted([PIRAPI]);
+  const canSeePir = useGranted([PIRAPI]) && isEnterpriseEdition;
   const canSeeKnowledge = useGranted([KNOWLEDGE]);
   const canSeeIntegrations = useGranted([MODULES, INGESTION, INGESTION_SETINGESTIONS]);
   const canSeeData = useGranted([MODULES, KNOWLEDGE, TAXIIAPI, CSVMAPPERS, INGESTION]);
-  const canSeeSettings = useGranted([
-    VIRTUAL_ORGANIZATION_ADMIN,
-    SETTINGS_SETPARAMETERS,
-    SETTINGS_SETACCESSES,
-    SETTINGS_SETAUTH,
-    SETTINGS_SETMARKINGS,
-    SETTINGS_SETDISSEMINATION,
-    SETTINGS_SETCUSTOMIZATION,
-    SETTINGS_SETLABELS,
-    SETTINGS_SETVOCABULARIES,
-    SETTINGS_SETCASETEMPLATES,
-    SETTINGS_SETSTATUSTEMPLATES,
-    SETTINGS_SETKILLCHAINPHASES,
-    SETTINGS_SECURITYACTIVITY,
-    SETTINGS_FILEINDEXING,
-    SETTINGS_SUPPORT,
-    SETTINGS_SETMANAGEXTMHUB,
-  ]);
+  const canSeeSettings = isGrantedToParameters
+    || isGrantedToSecurity
+    || isOrganizationAdmin
+    || isGrantedToCustomization
+    || isGrantedToTaxonomies
+    || isGrantedToAudit
+    || isGrantedToFileIndexing
+    || isGrantedToExperience;
 
   const hideAnalyses = useIsHiddenEntities('Report', 'Grouping', 'Note', 'Malware-Analysis', 'Security-Coverage');
   const hideEvents = useIsHiddenEntities('stix-sighting-relationship', 'Incident', 'Observed-Data');
@@ -202,6 +198,9 @@ const useNavMenu = (): NavGroup[] => {
       items: [
         !inDraft && {
           id: 'home', label: t_i18n('Home'), icon: <Home />, link: '/dashboard', exact: true,
+        },
+        !inDraft && canSeeKnowledge && {
+          id: 'telecom', label: t_i18n('Telecom Workspace'), icon: <WifiTetheringOutlined />, link: '/dashboard/telecom',
         },
         !inDraft && canSeeExplore && {
           id: 'dashboards',
@@ -390,7 +389,7 @@ const useNavMenu = (): NavGroup[] => {
             { granted: isGrantedToSecurity || isOrganizationAdmin, link: '/dashboard/settings/accesses', label: t_i18n('Security') },
             { granted: isGrantedToCustomization, link: '/dashboard/settings/customization', label: t_i18n('Customization') },
             { granted: isGrantedToTaxonomies, link: '/dashboard/settings/vocabularies', label: t_i18n('Taxonomies') },
-            { granted: isGrantedToAudit, link: '/dashboard/settings/activity', label: t_i18n('Activity') },
+            { granted: isGrantedToAudit, link: isEnterpriseEdition ? '/dashboard/settings/activity' : '/dashboard/settings/activity/alerting', label: t_i18n('Activity') },
             { granted: isGrantedToFileIndexing, link: '/dashboard/settings/file_indexing', label: t_i18n('File indexing') },
             { granted: isGrantedToExperience, link: '/dashboard/settings/experience', label: t_i18n('Filigran Experience') },
           ],

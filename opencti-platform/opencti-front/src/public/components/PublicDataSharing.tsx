@@ -9,8 +9,7 @@ import type { Theme } from '../../components/Theme';
 import { environment } from '../../relay/environment';
 import { LoginRootPublicQuery } from '../__generated__/LoginRootPublicQuery.graphql';
 import { rootPublicQuery } from '../LoginRoot';
-import logoLight from '../../static/images/logo_light.png';
-import logoDark from '../../static/images/logo_dark.png';
+import { getPlatformWordmark, PLATFORM_NAME } from '../../utils/platformBranding';
 
 // Deprecated - https://mui.com/system/styles/basics/
 // Do not use it for new code.
@@ -42,14 +41,14 @@ const PublicDataSharing = () => {
     queryRef,
   );
 
-  const loginLogo = settings.platform_theme?.theme_logo_login || theme.logo;
+  const loginLogo = getPlatformWordmark(theme.palette.mode, settings.platform_theme?.theme_logo_login || settings.platform_theme?.theme_logo);
 
   return (
     <>
       <div className={classes.container}>
         <img
-          src={loginLogo && loginLogo.length > 0 ? loginLogo : theme.palette.mode === 'dark' ? logoDark : logoLight}
-          alt="logo"
+          src={loginLogo}
+          alt={`${PLATFORM_NAME} logo`}
           className={classes.logo}
         />
         <PublicStreamLines />

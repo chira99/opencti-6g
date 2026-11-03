@@ -1,0 +1,13 @@
+ARG BASE_IMAGE=opencti/platform@sha256:53221acc481844a9026bea52088783fbe982190984c957766389f2488b169a93
+FROM ${BASE_IMAGE}
+ARG UI_RELEASE
+ARG SOURCE_FINGERPRINT
+LABEL org.opencontainers.image.title="6G CTI" \
+      org.opencontainers.image.version="${UI_RELEASE}" \
+      org.opencontainers.image.description="6G CTI production frontend on the unchanged OpenCTI 7.261016.0 backend" \
+      org.opencontainers.image.source="https://github.com/chira99/opencti-6g" \
+      org.opencontainers.image.revision="${SOURCE_FINGERPRINT}"
+WORKDIR /opt/opencti
+RUN rm -rf /opt/opencti/public
+COPY dist/ ./public/
+COPY release-manifest.json ./6g-cti-release.json

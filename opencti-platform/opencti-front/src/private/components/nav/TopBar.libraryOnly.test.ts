@@ -150,12 +150,6 @@ describe('the admin top bar is built from library components', () => {
     expect(link).toMatch(/\{\.\.\.rest\}/);
   });
 
-  it('draws the cluster rule with the library separator, never a styled div', () => {
-    const bar = SOURCES.get('src/private/components/nav/TopBar.tsx') as string;
-    expect(bar).toMatch(/<HeaderGroup separatorBefore=/);
-    expect(bar).not.toMatch(/role="separator"/);
-  });
-
   it('takes the AI controls from the library in their ia variant', () => {
     const ariane = SOURCES.get('src/private/components/chatbox/AskArianeButton.tsx') as string;
     expect(ariane).toMatch(/from '@filigran\/design-system'/);

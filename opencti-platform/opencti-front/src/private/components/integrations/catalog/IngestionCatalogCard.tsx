@@ -3,7 +3,6 @@ import { CardActions, Stack, Typography } from '@mui/material';
 import { GroupsOutlined } from '@mui/icons-material';
 import { alpha, useTheme } from '@mui/material/styles';
 import { IngestionConnector } from '@components/integrations/catalog/types';
-import EnterpriseEditionButton from '@components/common/entreprise_edition/EnterpriseEditionButton';
 import { getConnectorMetadata } from '@components/integrations/catalog/utils/ingestionConnectorTypeMetadata';
 import Box from '@mui/material/Box';
 import IngestionCatalogCardDeployButton from '@components/integrations/catalog/components/card/IngestionCatalogCardDeployButton';
@@ -102,9 +101,7 @@ const ConnectorActions = ({
 }: ConnectorActionsProps) => {
   const canDeploy = canDeployConnector(connector);
   const compatibilityMessage = useConnectorCompatibilityMessage(connector);
-  const shouldRenderDeploy = connector.manager_supported === true;
-  // Community Edition: the EE upsell only where EE would make the connector deployable
-  const showEnterpriseUpsell = !isEnterpriseEdition && canDeploy;
+  const shouldRenderDeploy = isEnterpriseEdition && connector.manager_supported === true;
 
   return (
     <CardActions
@@ -127,20 +124,13 @@ const ConnectorActions = ({
           onAuxClick={stopLinkNavigation}
         >
           <Security needs={[INGESTION_SETINGESTIONS]}>
-            {showEnterpriseUpsell ? (
-              <Box sx={{ '& .MuiButton-root': { marginLeft: 0 } }}>
-                {/** FIXME: remove marginLeft in EnterpriseEditionButton * */}
-                <EnterpriseEditionButton title="Deploy" feature="Connector deployment" withEEChip />
-              </Box>
-            ) : (
-              <IngestionCatalogCardDeployButton
-                deploymentCount={deploymentCount}
-                deployedTo={`/dashboard/integrations/deployed?search=${encodeURIComponent(connector.title)}`}
-                disabled={!canDeploy}
-                disabledReason={compatibilityMessage}
-                onClick={onClickDeploy}
-              />
-            )}
+            <IngestionCatalogCardDeployButton
+              deploymentCount={deploymentCount}
+              deployedTo={`/dashboard/integrations/deployed?search=${encodeURIComponent(connector.title)}`}
+              disabled={!canDeploy}
+              disabledReason={compatibilityMessage}
+              onClick={onClickDeploy}
+            />
           </Security>
         </Stack>
       )}

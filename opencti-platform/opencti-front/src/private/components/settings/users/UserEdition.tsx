@@ -10,6 +10,7 @@ import UserEditionGroups from './edition/UserEditionGroups';
 import { useFormatter } from '../../../../components/i18n';
 import { UserEdition_user$key } from './__generated__/UserEdition_user.graphql';
 import useGranted, { SETTINGS_SETACCESSES } from '../../../../utils/hooks/useGranted';
+import useEnterpriseEdition from '../../../../utils/hooks/useEnterpriseEdition';
 import { RootUserEditionQuery$data } from './__generated__/RootUserEditionQuery.graphql';
 import Loader from '../../../../components/Loader';
 import EditEntityControlledDial from '../../../../components/EditEntityControlledDial';
@@ -118,9 +119,11 @@ const UserEditionDrawer: FunctionComponent<UserEditionDrawerProps> = ({
 }) => {
   const { t_i18n } = useFormatter();
   const hasSetAccess = useGranted([SETTINGS_SETACCESSES]);
+  const isEnterpriseEdition = useEnterpriseEdition();
   const user = useFragment<UserEdition_user$key>(UserEditionFragment, userRef);
   const isServiceAccount = user?.user_service_account;
   const [currentTab, setCurrentTab] = useState('overview');
+  const activeTab = !isEnterpriseEdition && currentTab === 'organizations-admin' ? 'overview' : currentTab;
   const handleChangeTab = (value: string) => {
     setCurrentTab(value);
   };
@@ -134,12 +137,12 @@ const UserEditionDrawer: FunctionComponent<UserEditionDrawerProps> = ({
     >
       {user ? (
         <>
-          <Tabs value={currentTab} onValueChange={handleChangeTab}>
+          <Tabs value={activeTab} onValueChange={handleChangeTab}>
             <TabsList>
               <TabsTrigger value="overview">{t_i18n('Overview')}</TabsTrigger>
               <TabsTrigger value="password" disabled={!!user.external || isServiceAccount === true}>{t_i18n('Password')}</TabsTrigger>
               <TabsTrigger value="groups">{t_i18n('Groups')}</TabsTrigger>
-              {hasSetAccess && (
+              {hasSetAccess && isEnterpriseEdition && (
                 <TabsTrigger
                   value="organizations-admin"
                   disabled={user.objectAssignedOrganization?.edges.length === 0}
@@ -156,9 +159,11 @@ const UserEditionDrawer: FunctionComponent<UserEditionDrawerProps> = ({
               <UserEditionPassword user={user} />
             </TabsContent>
             <TabsContent value="groups"><UserEditionGroups user={user} /></TabsContent>
-            <TabsContent value="organizations-admin">
-              {hasSetAccess && <UserEditionOrganizationsAdmin user={user} />}
-            </TabsContent>
+            {hasSetAccess && isEnterpriseEdition && (
+              <TabsContent value="organizations-admin">
+                <UserEditionOrganizationsAdmin user={user} />
+              </TabsContent>
+            )}
             <TabsContent value="confidences">
               {hasSetAccess && <UserEditionConfidence user={user} context={user.editContext} />}
             </TabsContent>

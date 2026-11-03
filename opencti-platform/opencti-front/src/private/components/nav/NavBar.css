@@ -1,0 +1,19 @@
+/* The installed FDS Navbar scrolls this inner container, not the nav element.
+   Keep its thumb and track in the rail palette, including a dark rail on a light page. */
+.app-navbar > div:first-child > .overflow-y-auto {
+  scrollbar-color: color-mix(in srgb, var(--text-default-secondary) 55%, var(--bg-elevation-default)) var(--bg-elevation-default);
+}
+
+.app-navbar > div:first-child > .overflow-y-auto::-webkit-scrollbar {
+  width: 8px;
+}
+
+.app-navbar > div:first-child > .overflow-y-auto::-webkit-scrollbar-track {
+  background: var(--bg-elevation-default);
+}
+
+.app-navbar > div:first-child > .overflow-y-auto::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--text-default-secondary) 55%, var(--bg-elevation-default));
+  border: 2px solid var(--bg-elevation-default);
+  border-radius: 8px;
+}

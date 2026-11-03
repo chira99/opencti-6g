@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { PLATFORM_NAME } from '../utils/platformBranding';
 import { graphql, loadQuery, usePreloadedQuery } from 'react-relay';
 import { StyledEngineProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -14,6 +15,7 @@ import OtpActivationPage from './components/login/OtpActivationPage';
 export const rootPublicQuery = graphql`
   query LoginRootPublicQuery {
     publicSettings {
+      platform_title
       platform_enterprise_edition_license_validated
       platform_theme {
         id
@@ -79,6 +81,10 @@ const LoginRoot = ({ type }: { type: string }) => {
     rootPublicQuery,
     queryRef,
   );
+
+  useEffect(() => {
+    document.title = data.publicSettings.platform_title || PLATFORM_NAME;
+  }, [data.publicSettings.platform_title]);
 
   return (
     <StyledEngineProvider injectFirst={true}>

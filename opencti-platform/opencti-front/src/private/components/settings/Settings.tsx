@@ -27,6 +27,7 @@ import { useFormatter } from '../../../components/i18n';
 import { fieldSpacingContainerStyle } from '../../../utils/field';
 import useApiMutation from '../../../utils/hooks/useApiMutation';
 import useConnectedDocumentModifier from '../../../utils/hooks/useConnectedDocumentModifier';
+import useEnterpriseEdition from '../../../utils/hooks/useEnterpriseEdition';
 import useQueryLoading from '../../../utils/hooks/useQueryLoading';
 import useSensitiveModifications from '../../../utils/hooks/useSensitiveModifications';
 import DangerZoneChip from '../common/danger_zone/DangerZoneChip';
@@ -38,10 +39,12 @@ import SettingsAnalytics from './settings_analytics/SettingsAnalytics';
 import SettingsMessages from './settings_messages/SettingsMessages';
 import SettingsMapSource from './settings_map_source/SettingsMapSource';
 import SettingsManagers from './settings_managers/SettingsManagers';
+import { ENTERPRISE_ONLY_MANAGERS } from './settings_managers/settingsManagersUtils';
 import SettingsDependencies from './settings_platform/SettingsDependencies';
 import SettingsInfoRow from './settings_platform/SettingsInfoRow';
 import SettingsPlatformSummary from './settings_platform/SettingsPlatformSummary';
 import { useChatbot } from '@components/chatbox/ChatbotContext';
+import ResearchThemePicker from './themes/ResearchThemePicker';
 
 const twoColumnsSx = { display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 3 };
 const wideNarrowSx = { display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: 3 };
@@ -191,6 +194,7 @@ const settingsFocus = graphql`
 
 const SettingsComponent = ({ queryRef }: SettingsComponentProps) => {
   const theme = useTheme<Theme>();
+  const isEnterpriseEditionValid = useEnterpriseEdition();
 
   const [openEEChanges, setOpenEEChanges] = useState(false);
   const { xtmOneConfigured } = useChatbot();
@@ -221,11 +225,12 @@ const SettingsComponent = ({ queryRef }: SettingsComponentProps) => {
     platform_banner_level: settings.platform_banner_level,
   };
 
-  const modules = settings.platform_modules;
+  const modules = settings.platform_modules?.filter((module) => (
+    isEnterpriseEditionValid || !ENTERPRISE_ONLY_MANAGERS.includes(module.id)
+  ));
   const { version, dependencies } = about || { version: '', dependencies: [] };
   const isEnterpriseEditionActivated = settings.platform_enterprise_edition.license_enterprise;
   const isEnterpriseEditionByConfig = settings.platform_enterprise_edition.license_by_configuration;
-  const isEnterpriseEditionValid = settings.platform_enterprise_edition.license_validated;
 
   setTitle(t_i18n('Parameters | Settings'));
 
@@ -338,17 +343,14 @@ const SettingsComponent = ({ queryRef }: SettingsComponentProps) => {
           isEnterpriseEditionValid={isEnterpriseEditionValid}
           instancesNumber={settings.platform_cluster.instances_number}
           modules={modules ?? []}
-          ai={xtmOneConfigured ? null : {
+          ai={isEnterpriseEditionValid && !xtmOneConfigured ? {
             label: aiPoweredLabel,
             tooltip: aiPoweredTooltip,
-            status: isEnterpriseEditionValid && settings.platform_ai_enabled && settings.platform_ai_has_token,
-          }}
-          action={!isEnterpriseEditionActivated && (
-            <EnterpriseEditionButton inLine={true} />
-          )}
+            status: settings.platform_ai_enabled && settings.platform_ai_has_token,
+          } : null}
         />
 
-        {isEnterpriseEditionActivated && (
+        {isEnterpriseEditionActivated && isEnterpriseEditionValid && (
           <>
             <Box sx={twoColumnsSx}>
               <Card
@@ -519,17 +521,25 @@ const SettingsComponent = ({ queryRef }: SettingsComponentProps) => {
                 </Form>
               )}
             </Formik>
-            <div style={fieldSpacingContainerStyle}>
-              <SettingsAnalytics
-                settings={settings}
-                handleChangeFocus={handleChangeFocus}
-                handleSubmitField={handleSubmitField}
-                isEnterpriseEdition={isEnterpriseEditionValid}
-              />
-            </div>
+            {isEnterpriseEditionValid && (
+              <div style={fieldSpacingContainerStyle}>
+                <SettingsAnalytics
+                  settings={settings}
+                  handleChangeFocus={handleChangeFocus}
+                  handleSubmitField={handleSubmitField}
+                  isEnterpriseEdition={isEnterpriseEditionValid}
+                />
+              </div>
+            )}
           </Card>
 
           <Card title={t_i18n('Appearance')} data-testid="settings-appearance">
+            <ResearchThemePicker
+              themes={(themes?.edges ?? []).map(({ node }) => node)}
+              selectedThemeId={settings.platform_theme?.id}
+              onSelect={(themeId) => handleSubmitField('platform_theme', themeId)}
+              onRefresh={handleRefetch}
+            />
             <Formik
               onSubmit={() => {}}
               enableReinitialize={true}
@@ -575,35 +585,37 @@ const SettingsComponent = ({ queryRef }: SettingsComponentProps) => {
                     {availableLanguage.map(({ value, label }) => <SelectItem key={value} value={value}>{label}</SelectItem>)}
                   </Field>
                   <HiddenTypesField />
-                  <div style={fieldSpacingContainerStyle}>
-                    <SettingsInfoRow
-                      data-testid="settings-whitemark"
-                      divider={false}
-                      size="field"
-                      label={(
-                        <>
-                          {t_i18n('Remove Filigran logos')}
-                          <EEChip size="sm" />
-                        </>
-                      )}
-                    >
-                      <Field
-                        component={Switch}
-                        variant="outlined"
-                        name="platform_whitemark"
-                        disabled={!isEnterpriseEditionValid}
-                        checked={
-                          settings.platform_whitemark
-                          && isEnterpriseEditionValid
-                        }
-                        inputProps={{ 'aria-label': t_i18n('Remove Filigran logos') }}
-                        onChange={(_event: ChangeEvent<HTMLInputElement>, value: boolean) => handleSubmitField(
-                          'platform_whitemark',
-                          value,
+                  {isEnterpriseEditionValid && (
+                    <div style={fieldSpacingContainerStyle}>
+                      <SettingsInfoRow
+                        data-testid="settings-whitemark"
+                        divider={false}
+                        size="field"
+                        label={(
+                          <>
+                            {t_i18n('Remove Filigran logos')}
+                            <EEChip size="sm" />
+                          </>
                         )}
-                      />
-                    </SettingsInfoRow>
-                  </div>
+                      >
+                        <Field
+                          component={Switch}
+                          variant="outlined"
+                          name="platform_whitemark"
+                          disabled={!isEnterpriseEditionValid}
+                          checked={
+                            settings.platform_whitemark
+                            && isEnterpriseEditionValid
+                          }
+                          inputProps={{ 'aria-label': t_i18n('Remove Filigran logos') }}
+                          onChange={(_event: ChangeEvent<HTMLInputElement>, value: boolean) => handleSubmitField(
+                            'platform_whitemark',
+                            value,
+                          )}
+                        />
+                      </SettingsInfoRow>
+                    </div>
+                  )}
                 </Form>
               )}
             </Formik>

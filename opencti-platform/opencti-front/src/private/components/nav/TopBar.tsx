@@ -23,9 +23,6 @@ import useQueryLoading from '../../../utils/hooks/useQueryLoading';
 import { decodeSearchKeyword, handleSearchByFilter, handleSearchByKeyword } from '../../../utils/SearchUtils';
 import Security from '../../../utils/Security';
 import FeedbackCreation from '../cases/feedbacks/FeedbackCreation';
-import AskArianeButton from '../chatbox/AskArianeButton';
-import CtemCommandCenterButton from '../chatbox/CtemCommandCenterButton';
-import { CGUStatus } from '../settings/Experience';
 import { useSettingsMessagesBannerHeight } from '../settings/settings_messages/SettingsMessagesBanner';
 import useTopBanner from '../../../utils/hooks/useTopBanner';
 import { TopBarNotificationNumberSubscription$data } from './__generated__/TopBarNotificationNumberSubscription.graphql';
@@ -90,7 +87,6 @@ const TopBarComponent: FunctionComponent<TopBarProps> = ({
     bannerSettings: { bannerHeightNumber },
     settings: {
       platform_enterprise_edition: ee,
-      filigran_chatbot_ai_cgu_status,
     },
     isXTMHubAccessible,
     me,
@@ -98,8 +94,6 @@ const TopBarComponent: FunctionComponent<TopBarProps> = ({
   const isAllNewsFeedUnsubscribed = me.unsubscribed_news_feed_types?.includes('*') ?? false;
   const draftContext = useDraftContext();
   const hasKnowledgeAccess = useGranted([KNOWLEDGE]);
-  const showAiCluster = hasKnowledgeAccess
-    && filigran_chatbot_ai_cgu_status !== CGUStatus.disabled;
   const settingsMessagesBannerHeight = useSettingsMessagesBannerHeight();
   const { height: topBannerHeight } = useTopBanner();
   const [notificationsNumber, setNotificationsNumber] = useState<null | number>(
@@ -262,19 +256,7 @@ const TopBarComponent: FunctionComponent<TopBarProps> = ({
           )}
         </HeaderGroup>
         <HeaderGroup>
-          <Security needs={[KNOWLEDGE]}>
-            <>
-              {
-                filigran_chatbot_ai_cgu_status !== CGUStatus.disabled && (
-                  <>
-                    <AskArianeButton />
-                    <CtemCommandCenterButton />
-                  </>
-                )
-              }
-            </>
-          </Security>
-          <HeaderGroup separatorBefore={showAiCluster}>
+          <HeaderGroup>
             {!draftContext && (
               <Security needs={[KNOWLEDGE]}>
                 <>

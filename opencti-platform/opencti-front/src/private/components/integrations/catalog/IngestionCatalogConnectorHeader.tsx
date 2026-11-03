@@ -4,7 +4,6 @@ import Button from '@common/button/Button';
 import { useTheme } from '@mui/styles';
 import IngestionCatalogChip from '@components/integrations/catalog/IngestionCatalogUseCaseChip';
 import { IngestionConnector } from '@components/integrations/catalog/types';
-import EnterpriseEditionButton from '@components/common/entreprise_edition/EnterpriseEditionButton';
 import { getConnectorMetadata } from '@components/integrations/catalog/utils/ingestionConnectorTypeMetadata';
 import { canDeployConnector } from '@components/integrations/catalog/utils/isDeployableConnector';
 import useConnectorCompatibilityMessage from '@components/integrations/catalog/hooks/useConnectorCompatibilityMessage';
@@ -29,11 +28,9 @@ const IngestionCatalogConnectorHeader = ({ connector, isEnterpriseEdition, onCli
   const theme = useTheme<Theme>();
 
   const connectorMetadata = getConnectorMetadata(connector.container_type, t_i18n);
-  const shouldRenderDeploy = connector.manager_supported === true;
+  const shouldRenderDeploy = isEnterpriseEdition && connector.manager_supported === true;
   const canDeploy = canDeployConnector(connector);
   const compatibilityMessage = useConnectorCompatibilityMessage(connector);
-  // Community Edition: the EE upsell only where EE would make the connector deployable
-  const showEnterpriseUpsell = !isEnterpriseEdition && canDeploy;
 
   return (
     <Stack
@@ -101,19 +98,15 @@ const IngestionCatalogConnectorHeader = ({ connector, isEnterpriseEdition, onCli
         </Stack>
       </Stack>
 
-      <div>
-        <Security needs={[INGESTION_SETINGESTIONS]} hasAccess={shouldRenderDeploy}>
-          {
-            showEnterpriseUpsell ? (
-              <EnterpriseEditionButton title="Deploy" feature="Connector deployment" withEEChip />
-            ) : (
-              <DisabledReasonTooltip reason={compatibilityMessage}>
-                <Button disabled={!canDeploy} onClick={onClickDeploy} style={{ marginLeft: theme.spacing(1) }}>{t_i18n('Deploy')}</Button>
-              </DisabledReasonTooltip>
-            )
-          }
-        </Security>
-      </div>
+      {shouldRenderDeploy && (
+        <div>
+          <Security needs={[INGESTION_SETINGESTIONS]}>
+            <DisabledReasonTooltip reason={compatibilityMessage}>
+              <Button disabled={!canDeploy} onClick={onClickDeploy} style={{ marginLeft: theme.spacing(1) }}>{t_i18n('Deploy')}</Button>
+            </DisabledReasonTooltip>
+          </Security>
+        </div>
+      )}
     </Stack>
   );
 };

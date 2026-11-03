@@ -2,15 +2,10 @@ import React, { FunctionComponent, useMemo } from 'react';
 import { createFragmentContainer, graphql } from 'react-relay';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { ThemeOptions } from '@mui/material/styles/createTheme';
-import themeDark, {
-  THEME_DARK_DEFAULT_ACCENT,
-  THEME_DARK_DEFAULT_BACKGROUND,
-  THEME_DARK_DEFAULT_PAPER,
-  THEME_DARK_DEFAULT_PRIMARY,
-  THEME_DARK_DEFAULT_SECONDARY,
-  THEME_DARK_DEFAULT_TEXT,
-} from './ThemeDark';
+import themeDark from './ThemeDark';
 import themeLight from './ThemeLight';
+import { DEFAULT_RESEARCH_THEME, getResearchThemePreset } from '../utils/researchThemes';
+import { getPlatformWordmark, PLATFORM_FAVICON, PLATFORM_MARK } from '../utils/platformBranding';
 import { useDocumentFaviconModifier, useDocumentThemeModifier } from '../utils/hooks/useDocumentModifier';
 import useFdsThemeScope from '../utils/hooks/useFdsThemeScope';
 import { isLightThemeName } from '../utils/themeName';
@@ -49,21 +44,8 @@ const themeBuilder = (
   const platformThemeSecondary = theme?.theme_secondary ?? null;
   const platformThemeAccent = theme?.theme_accent ?? null;
   const platformThemeTextColor = theme?.theme_text_color ?? 'rgba(255, 255, 255, 0.7)';
-  if (isLightThemeName(theme?.name)) {
-    // needed until everything is customizable, like text colors
-    return themeLight(
-      platformThemeLogo,
-      platformThemeLogoCollapsed,
-      platformThemeBackground,
-      platformThemePaper,
-      platformThemeNav,
-      platformThemePrimary,
-      platformThemeSecondary,
-      platformThemeAccent,
-      platformThemeTextColor,
-    );
-  }
-  return themeDark(
+  const builder = isLightThemeName(theme?.name) ? themeLight : themeDark;
+  const options = builder(
     platformThemeLogo,
     platformThemeLogoCollapsed,
     platformThemeBackground,
@@ -74,28 +56,37 @@ const themeBuilder = (
     platformThemeAccent,
     platformThemeTextColor,
   );
+  const preset = getResearchThemePreset(theme.name);
+  const railSurface = !isLightThemeName(theme.name) || preset?.name === 'Graphite Light' ? 'dark' : 'light';
+  const brandedOptions = {
+    ...options,
+    logo: getPlatformWordmark(railSurface, platformThemeLogo),
+    logo_collapsed: platformThemeLogoCollapsed || PLATFORM_MARK,
+  };
+  if (!preset) return brandedOptions;
+  return {
+    ...brandedOptions,
+    researchNavigation: {
+      background: platformThemeNav || preset.theme.theme_nav,
+      foreground: preset.navForeground,
+      muted: preset.navMuted,
+      accent: preset.navAccent,
+    },
+    palette: {
+      ...options.palette,
+      leftBar: { ...options.palette.leftBar, text: preset.navForeground },
+    },
+  };
 };
 
-const defaultTheme: AppThemeType = {
-  name: 'Filigran Dark',
-  theme_accent: THEME_DARK_DEFAULT_ACCENT,
-  theme_background: THEME_DARK_DEFAULT_BACKGROUND,
-  theme_logo: '',
-  theme_logo_collapsed: '',
-  theme_logo_login: '',
-  theme_nav: THEME_DARK_DEFAULT_BACKGROUND,
-  theme_paper: THEME_DARK_DEFAULT_PAPER,
-  theme_primary: THEME_DARK_DEFAULT_PRIMARY,
-  theme_secondary: THEME_DARK_DEFAULT_SECONDARY,
-  theme_text_color: THEME_DARK_DEFAULT_TEXT,
-};
+const defaultTheme: AppThemeType = DEFAULT_RESEARCH_THEME;
 
 const AppThemeProvider: FunctionComponent<AppThemeProviderProps> = ({
   children,
   settings,
   activeTheme,
 }) => {
-  useDocumentFaviconModifier(settings?.platform_favicon);
+  useDocumentFaviconModifier(settings?.platform_favicon || PLATFORM_FAVICON);
 
   const { exportTheme } = useExportTheme();
   const themeToUse = exportTheme ?? activeTheme ?? settings.platform_theme;

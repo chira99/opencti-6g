@@ -72,6 +72,7 @@ const SSOSingletonStrategiesContent = () => {
     { id: 'header', name: t_i18n('HTTP headers'), type: t_i18n('SSO'), enabled: headerEnabled, strategy: 'header' },
     { id: 'cert', name: t_i18n('Client Certificate'), type: t_i18n('SSO'), enabled: certEnabled, strategy: 'cert' },
   ];
+  const visibleStrategies = strategiesData.filter((strategy) => isEnterpriseEdition || strategy.strategy === 'local');
 
   const dataColumns: DataTableProps['dataColumns'] = {
     name: {
@@ -137,8 +138,8 @@ const SSOSingletonStrategiesContent = () => {
       <DataTableWithoutFragment
         storageKey="SSOSingletonStrategies"
         dataColumns={dataColumns}
-        data={strategiesData}
-        globalCount={strategiesData.length}
+        data={visibleStrategies}
+        globalCount={visibleStrategies.length}
         onLineClick={handleLineClick}
         disableToolBar
         disableNavigation
@@ -183,7 +184,7 @@ const SSOSingletonStrategiesContent = () => {
         }}
       />
 
-      {editingStrategy && (
+      {editingStrategy && (isEnterpriseEdition || editingStrategy === 'local') && (
         <Drawer
           title={drawerTitles[editingStrategy]}
           open={!!editingStrategy}
@@ -196,7 +197,7 @@ const SSOSingletonStrategiesContent = () => {
           </Suspense>
         </Drawer>
       )}
-      {logsDrawer && (
+      {isEnterpriseEdition && logsDrawer && (
         <AuthLogsByIdentifierDrawer
           isOpen
           onClose={() => setLogsDrawer(null)}

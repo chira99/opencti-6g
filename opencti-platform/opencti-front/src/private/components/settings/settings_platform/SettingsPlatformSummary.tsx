@@ -73,7 +73,7 @@ const SettingsPlatformSummary = ({
       label: t_i18n('Managers'),
       value: valueText(t_i18n('{enabled} of {total} enabled', { values: { enabled: managerCounts.enabled, total: managerCounts.all } })),
     },
-    ...(ai ? [{
+    ...(isEnterpriseEditionValid && ai ? [{
       key: 'ai',
       label: <>{t_i18n('AI Powered')}<EEChip size="sm" /></>,
       value: <ItemBoolean label={ai.label} status={ai.status} tooltip={ai.tooltip} labelTextTransform="none" />,
@@ -86,7 +86,7 @@ const SettingsPlatformSummary = ({
   ];
 
   return (
-    <Card title={t_i18n('OpenCTI platform')} action={action} padding="medium" data-testid="settings-platform">
+    <Card title={t_i18n('6G CTI platform')} action={isEnterpriseEditionValid ? action : undefined} padding="medium" data-testid="settings-platform">
       <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', columnGap: 3, rowGap: 2 }}>
         {facts.map(({ key, label, value }) => (
           <Box key={key} data-testid={`settings-platform-${key}`} sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, minWidth: 0 }}>

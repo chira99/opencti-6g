@@ -319,6 +319,12 @@ interface ExtendedThemeOptions extends ThemeOptions {
 }
 
 export interface Theme extends MuiTheme {
+  researchNavigation?: {
+    background: string;
+    foreground: string;
+    muted: string;
+    accent: string;
+  };
   logo: string | undefined;
   logo_collapsed: string | undefined;
   borderRadius: number;

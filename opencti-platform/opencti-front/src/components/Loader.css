@@ -1,0 +1,22 @@
+.cti-loader__mark {
+  display: inline-block;
+  flex-shrink: 0;
+  vertical-align: middle;
+  transform-origin: center;
+  animation: cti-loader-spin 1.8s linear infinite;
+}
+
+@keyframes cti-loader-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cti-loader__mark {
+    animation: none;
+  }
+}

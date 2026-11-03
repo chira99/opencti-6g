@@ -2,6 +2,15 @@ import { describe, expect, it } from 'vitest';
 import { isLightThemeName, BUILT_IN_DARK_THEME_NAME, BUILT_IN_LIGHT_THEME_NAME, LEGACY_DARK_THEME_NAME, LEGACY_LIGHT_THEME_NAME } from './themeName';
 
 describe('isLightThemeName', () => {
+  it.each(['Daylight', 'Graphite Light'])('recognises the selected light preset %s', (name) => {
+    expect(isLightThemeName(name)).toBe(true);
+  });
+
+  it('keeps Graphite Dark and similarly named custom themes dark', () => {
+    expect(isLightThemeName('Graphite Dark')).toBe(false);
+    expect(isLightThemeName('Graphite Light - custom')).toBe(false);
+  });
+
   it('accepts the built-in light theme', () => {
     expect(isLightThemeName(BUILT_IN_LIGHT_THEME_NAME)).toBe(true);
   });

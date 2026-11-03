@@ -18,10 +18,10 @@ describe('navBarConstants', () => {
   });
 
   it('exposes the rail widths the floating toolbars offset themselves by', () => {
-    // 48 is the design-system rail's real collapsed width (`w-12`); 180 its
-    // expanded width (`w-45`). A drift here silently misaligns seven toolbars.
+    // Collapsed rail stays compact; the wider expanded rail fits the telecom label.
+    // These widths also drive the floating toolbars and header offsets.
     expect(SMALL_BAR_WIDTH).toBe(48);
-    expect(OPEN_BAR_WIDTH).toBe(180);
+    expect(OPEN_BAR_WIDTH).toBe(240);
   });
 
   it('keeps the storage keys the other readers already use', () => {

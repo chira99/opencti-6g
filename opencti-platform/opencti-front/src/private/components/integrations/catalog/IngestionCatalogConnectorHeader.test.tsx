@@ -5,12 +5,7 @@ import testRender, { createMockUserContext } from '../../../../utils/tests/test-
 import { BYPASS } from '../../../../utils/hooks/useGranted';
 import type { IngestionConnector } from './types';
 import IngestionCatalogConnectorHeader from './IngestionCatalogConnectorHeader';
-
-// The real upsell mounts the feedback drawer, which needs entity settings this test does not provide
-vi.mock('@components/common/entreprise_edition/EnterpriseEditionButton', () => ({
-  __esModule: true,
-  default: ({ title }: { title: string }) => <button type="button" data-testid="enterprise-upsell">{title}</button>,
-}));
+import IngestionCatalogCard from './IngestionCatalogCard';
 
 const buildConnector = (overrides: Partial<IngestionConnector> = {}): IngestionConnector => ({
   title: 'CrowdStrike Falcon Intel',
@@ -60,7 +55,25 @@ const buildUserContext = () => ({
   }),
 });
 
-describe('IngestionCatalogConnectorHeader', () => {
+const catalogViews: {
+  name: string;
+  render: (connector: IngestionConnector, isEnterpriseEdition: boolean, onClickDeploy: () => void) => React.ReactElement;
+}[] = [
+  {
+    name: 'IngestionCatalogConnectorHeader',
+    render: (connector, isEnterpriseEdition, onClickDeploy) => (
+      <IngestionCatalogConnectorHeader connector={connector} isEnterpriseEdition={isEnterpriseEdition} onClickDeploy={onClickDeploy} />
+    ),
+  },
+  {
+    name: 'IngestionCatalogCard',
+    render: (connector, isEnterpriseEdition, onClickDeploy) => (
+      <IngestionCatalogCard node={connector} isEnterpriseEdition={isEnterpriseEdition} onClickDeploy={onClickDeploy} />
+    ),
+  },
+];
+
+describe.each(catalogViews)('$name', ({ render: renderView }) => {
   it('disables Deploy when no compatible version exists', () => {
     const connector = buildConnector({
       compatibility: {
@@ -72,14 +85,14 @@ describe('IngestionCatalogConnectorHeader', () => {
     });
 
     testRender(
-      <IngestionCatalogConnectorHeader connector={connector} isEnterpriseEdition={true} onClickDeploy={() => {}} />,
+      renderView(connector, true, () => {}),
       { userContext: buildUserContext() },
     );
 
     expect(screen.getByRole('button', { name: 'Deploy' })).toBeDisabled();
   });
 
-  it('disables Deploy instead of the Enterprise Edition upsell in Community Edition when no compatible version exists', () => {
+  it('hides deployment controls in Community Edition even when no compatible version exists', () => {
     const connector = buildConnector({
       compatibility: {
         is_compatible: false,
@@ -90,12 +103,12 @@ describe('IngestionCatalogConnectorHeader', () => {
     });
 
     testRender(
-      <IngestionCatalogConnectorHeader connector={connector} isEnterpriseEdition={false} onClickDeploy={() => {}} />,
+      renderView(connector, false, () => {}),
       { userContext: buildUserContext() },
     );
 
-    expect(screen.getByRole('button', { name: 'Deploy' })).toBeDisabled();
-    expect(screen.queryByTestId('enterprise-upsell')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Deploy' })).not.toBeInTheDocument();
+    expect(screen.getByText(connector.title)).toBeInTheDocument();
   });
 
   it('explains on hover why Deploy is disabled, and lets keyboard users reach the reason', async () => {
@@ -109,7 +122,7 @@ describe('IngestionCatalogConnectorHeader', () => {
     });
 
     const { user } = testRender(
-      <IngestionCatalogConnectorHeader connector={connector} isEnterpriseEdition={true} onClickDeploy={() => {}} />,
+      renderView(connector, true, () => {}),
       { userContext: buildUserContext() },
     );
 
@@ -119,7 +132,7 @@ describe('IngestionCatalogConnectorHeader', () => {
     expect(await screen.findByRole('tooltip')).toHaveTextContent(/^This connector is not compatible with your current platform version. It supports platform versions up to/);
   });
 
-  it('keeps Deploy enabled when a compatible version exists', () => {
+  it('keeps licensed deployment working when a compatible version exists', async () => {
     const connector = buildConnector({
       compatibility: {
         is_compatible: true,
@@ -129,15 +142,19 @@ describe('IngestionCatalogConnectorHeader', () => {
       },
     });
 
-    testRender(
-      <IngestionCatalogConnectorHeader connector={connector} isEnterpriseEdition={true} onClickDeploy={() => {}} />,
+    const onClickDeploy = vi.fn();
+    const { user } = testRender(
+      renderView(connector, true, onClickDeploy),
       { userContext: buildUserContext() },
     );
 
-    expect(screen.getByRole('button', { name: 'Deploy' })).toBeEnabled();
+    const deployButton = screen.getByRole('button', { name: 'Deploy' });
+    expect(deployButton).toBeEnabled();
+    await user.click(deployButton);
+    expect(onClickDeploy).toHaveBeenCalledOnce();
   });
 
-  it('shows the Enterprise Edition upsell in Community Edition for a compatible managed connector', () => {
+  it('hides deployment controls in Community Edition for compatible managed connectors', () => {
     const connector = buildConnector({
       compatibility: {
         is_compatible: true,
@@ -148,30 +165,31 @@ describe('IngestionCatalogConnectorHeader', () => {
     });
 
     testRender(
-      <IngestionCatalogConnectorHeader connector={connector} isEnterpriseEdition={false} onClickDeploy={() => {}} />,
+      renderView(connector, false, () => {}),
       { userContext: buildUserContext() },
     );
 
-    expect(screen.getByTestId('enterprise-upsell')).toHaveTextContent('Deploy');
+    expect(screen.queryByRole('button', { name: 'Deploy' })).not.toBeInTheDocument();
+    expect(screen.getByText(connector.title)).toBeInTheDocument();
   });
 
   it('renders neither Deploy nor the Enterprise Edition upsell in Community Edition for unmanaged connectors', () => {
     const connector = buildConnector({ manager_supported: false });
 
     testRender(
-      <IngestionCatalogConnectorHeader connector={connector} isEnterpriseEdition={false} onClickDeploy={() => {}} />,
+      renderView(connector, false, () => {}),
       { userContext: buildUserContext() },
     );
 
     expect(screen.queryByRole('button', { name: 'Deploy' })).not.toBeInTheDocument();
-    expect(screen.queryByTestId('enterprise-upsell')).not.toBeInTheDocument();
+    expect(screen.getByText(connector.title)).toBeInTheDocument();
   });
 
   it('does not render Deploy for unmanaged connectors', () => {
     const connector = buildConnector({ manager_supported: false });
 
     testRender(
-      <IngestionCatalogConnectorHeader connector={connector} isEnterpriseEdition={true} onClickDeploy={() => {}} />,
+      renderView(connector, true, () => {}),
       { userContext: buildUserContext() },
     );
 

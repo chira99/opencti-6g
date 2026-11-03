@@ -20,7 +20,8 @@ import {
   VIRTUAL_ORGANIZATION_ADMIN,
 } from './useGranted';
 
-const buildUserContext = (capabilities: string[]) => createMockUserContext({
+const buildUserContext = (capabilities: string[], isEnterpriseEdition = true) => createMockUserContext({
+  settings: { platform_enterprise_edition: { license_validated: isEnterpriseEdition } },
   me: {
     id: 'test-user-id',
     capabilities: capabilities.map((name) => ({ name })),
@@ -234,5 +235,23 @@ describe('Hook: useSettingsFallbackUrl', () => {
       { userContext: buildUserContext([]) },
     );
     expect(hook.result.current).toBe('/dashboard');
+  });
+});
+
+describe('Community settings fallback', () => {
+  it.each([
+    { capabilities: [VIRTUAL_ORGANIZATION_ADMIN], expected: '/dashboard' },
+    { capabilities: [SETTINGS_SETDISSEMINATION], expected: '/dashboard' },
+    { capabilities: [SETTINGS_FILEINDEXING], expected: '/dashboard' },
+    { capabilities: [SETTINGS_SECURITYACTIVITY], expected: '/dashboard/settings/activity/alerting' },
+    { capabilities: [SETTINGS_SETDISSEMINATION, SETTINGS_SETAUTH], expected: '/dashboard/settings/accesses/authentications' },
+    { capabilities: [SETTINGS_FILEINDEXING, SETTINGS_SUPPORT], expected: '/dashboard/settings/experience' },
+    { capabilities: [SETTINGS_SETACCESSES], expected: '/dashboard/settings/accesses' },
+  ])('uses an available destination for $capabilities', ({ capabilities, expected }) => {
+    const { hook } = testRenderHook(
+      () => useSettingsFallbackUrl(),
+      { userContext: buildUserContext(capabilities, false) },
+    );
+    expect(hook.result.current).toBe(expected);
   });
 });

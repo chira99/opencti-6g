@@ -45,6 +45,7 @@ const RoleEditionDrawer: FunctionComponent<RoleEditionDrawerProps> = ({
   const queryRef = useQueryLoading<RoleEditionCapabilitiesLinesSearchQuery>(roleEditionCapabilitiesLinesSearch);
   const role = useFragment<RoleEdition_role$key>(RoleEditionFragment, roleRef);
   const isEnterpriseEdition = useEnterpriseEdition();
+  const activeTab = !isEnterpriseEdition && currentTab === 'capabilities-draft' ? 'capabilities' : currentTab;
 
   const UpdateRoleControlledDial = (props: DrawerControlledDialProps) => (
     <EditEntityControlledDial
@@ -64,14 +65,16 @@ const RoleEditionDrawer: FunctionComponent<RoleEditionDrawerProps> = ({
     >
       {role ? (
         <>
-          <Tabs value={currentTab} onValueChange={setCurrentTab}>
+          <Tabs value={activeTab} onValueChange={setCurrentTab}>
             <TabsList>
               <TabsTrigger value="overview">{t_i18n('Overview')}</TabsTrigger>
               <TabsTrigger value="capabilities">{t_i18n('Capabilities')}</TabsTrigger>
-              <TabsTrigger value="capabilities-draft" disabled={!isEnterpriseEdition}>
-                {t_i18n('Capabilities in Draft')}
-                <EEChip clickable={false} />
-              </TabsTrigger>
+              {isEnterpriseEdition && (
+                <TabsTrigger value="capabilities-draft">
+                  {t_i18n('Capabilities in Draft')}
+                  <EEChip clickable={false} />
+                </TabsTrigger>
+              )}
             </TabsList>
             <TabsContent value="overview">
               <RoleEditionOverview role={role} context={role.editContext} />
@@ -79,9 +82,11 @@ const RoleEditionDrawer: FunctionComponent<RoleEditionDrawerProps> = ({
             <TabsContent value="capabilities">
               {queryRef && <RoleEditionCapabilities role={role} queryRef={queryRef} />}
             </TabsContent>
-            <TabsContent value="capabilities-draft">
-              {queryRef && <RoleEditionCapabilities role={role} queryRef={queryRef} isCapabilitiesInDraft />}
-            </TabsContent>
+            {isEnterpriseEdition && (
+              <TabsContent value="capabilities-draft">
+                {queryRef && <RoleEditionCapabilities role={role} queryRef={queryRef} isCapabilitiesInDraft />}
+              </TabsContent>
+            )}
           </Tabs>
         </>
       )

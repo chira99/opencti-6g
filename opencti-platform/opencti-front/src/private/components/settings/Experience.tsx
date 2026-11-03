@@ -26,7 +26,7 @@ import type { Theme } from '../../../components/Theme';
 import { FieldOption } from '../../../utils/field';
 import useApiMutation from '../../../utils/hooks/useApiMutation';
 import useAuth from '../../../utils/hooks/useAuth';
-import { isEnterpriseEditionFromXtmOne } from '../../../utils/hooks/useEnterpriseEdition';
+import useEnterpriseEdition, { isEnterpriseEditionFromXtmOne } from '../../../utils/hooks/useEnterpriseEdition';
 import useConnectedDocumentModifier from '../../../utils/hooks/useConnectedDocumentModifier';
 import useGranted, { SETTINGS_SETPARAMETERS, SETTINGS_SUPPORT } from '../../../utils/hooks/useGranted';
 import useQueryLoading from '../../../utils/hooks/useQueryLoading';
@@ -99,6 +99,7 @@ const ExperienceComponent: FunctionComponent<ExperienceComponentProps> = ({ quer
   const { setTitle } = useConnectedDocumentModifier();
   setTitle(t_i18n('Filigran Experience | Settings'));
   const theme = useTheme<Theme>();
+  const isEnterpriseEdition = useEnterpriseEdition();
   const { settings: { filigran_chatbot_ai_cgu_status, platform_ai_enabled } } = useAuth();
   const isGrantedToParameters = useGranted([SETTINGS_SETPARAMETERS]);
   const { xtmOneConfigured } = useChatbot();
@@ -332,54 +333,56 @@ const ExperienceComponent: FunctionComponent<ExperienceComponentProps> = ({ quer
     <div style={{ margin: 0, padding: '0 0 50px 0' }} data-testid="experience-page">
       <Breadcrumbs elements={[{ label: t_i18n('Settings') }, { label: t_i18n('Filigran Experience'), current: true }]} />
       <Grid container={true} spacing={3} alignItems="stretch" style={{ marginBottom: 23 }}>
-        <Grid item xs={6}>
-          <ExperienceCard
-            icon={<RocketLaunchOutlined />}
-            overline={t_i18n('Filigran Experience')}
-            title={t_i18n('Enterprise Edition')}
-            accent={eeAccent}
-            statusChip={eeStatusChip}
-            footer={isEnterpriseEditionActivated ? eeActivatedFooter : eeCommunityFooter}
-            testId="experience-enterprise-edition-card"
-          >
-            {isEnterpriseEditionActivated ? eeActivatedBody : eeCommunityBody}
-          </ExperienceCard>
-          <Dialog
-            open={openEEChanges}
-            onClose={() => setOpenEEChanges(false)}
-            title={t_i18n('Disable Enterprise Edition')}
-          >
-            <Alert
-              severity="warning"
-              variant="outlined"
-              color="dangerZone"
-              style={{ borderColor: theme.palette.dangerZone.main }}
+        {isEnterpriseEdition && (
+          <Grid item xs={6}>
+            <ExperienceCard
+              icon={<RocketLaunchOutlined />}
+              overline={t_i18n('Filigran Experience')}
+              title={t_i18n('Enterprise Edition')}
+              accent={eeAccent}
+              statusChip={eeStatusChip}
+              footer={isEnterpriseEditionActivated ? eeActivatedFooter : eeCommunityFooter}
+              testId="experience-enterprise-edition-card"
             >
-              {t_i18n(getEEWarningMessage(isLtsPlatform))}
-              <br /><br />
-              <strong>{t_i18n('However, your existing data will remain intact and will not be lost.')}</strong>
-            </Alert>
-            <DialogActions>
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  setOpenEEChanges(false);
-                }}
+              {isEnterpriseEditionActivated ? eeActivatedBody : eeCommunityBody}
+            </ExperienceCard>
+            <Dialog
+              open={openEEChanges}
+              onClose={() => setOpenEEChanges(false)}
+              title={t_i18n('Disable Enterprise Edition')}
+            >
+              <Alert
+                severity="warning"
+                variant="outlined"
+                color="dangerZone"
+                style={{ borderColor: theme.palette.dangerZone.main }}
               >
-                {t_i18n('Cancel')}
-              </Button>
-              <Button
-                onClick={() => {
-                  setOpenEEChanges(false);
-                  handleSubmitField('enterprise_license', '');
-                }}
-              >
-                {t_i18n('Validate')}
-              </Button>
-            </DialogActions>
-          </Dialog>
-        </Grid>
-        <Grid item xs={6}>
+                {t_i18n(getEEWarningMessage(isLtsPlatform))}
+                <br /><br />
+                <strong>{t_i18n('However, your existing data will remain intact and will not be lost.')}</strong>
+              </Alert>
+              <DialogActions>
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setOpenEEChanges(false);
+                  }}
+                >
+                  {t_i18n('Cancel')}
+                </Button>
+                <Button
+                  onClick={() => {
+                    setOpenEEChanges(false);
+                    handleSubmitField('enterprise_license', '');
+                  }}
+                >
+                  {t_i18n('Validate')}
+                </Button>
+              </DialogActions>
+            </Dialog>
+          </Grid>
+        )}
+        <Grid item xs={isEnterpriseEdition ? 6 : 12}>
           <XtmHubSettings />
         </Grid>
 

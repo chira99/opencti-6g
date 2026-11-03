@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-labelledby="brand-title brand-desc">
+  <title id="brand-title">6G CTI</title>
+  <desc id="brand-desc">6G CTI network and intelligence lens icon, with stronger outlines for small browser tab sizes.</desc>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M32 5 55 18.5v27L32 59 9 45.5v-27Z" stroke="#6972d9" stroke-width="4.4"/>
+    <path d="M32 5v15.5M55 45.5l-13.1-7.7M9 45.5l13.1-7.7" stroke="#008d9e" stroke-width="2.6"/>
+    <circle cx="32" cy="32" r="11.5" stroke="#6972d9" stroke-width="4.2"/>
+  </g>
+  <g fill="#6972d9">
+    <circle cx="55" cy="18.5" r="3.8"/>
+    <circle cx="9" cy="18.5" r="3.8"/>
+    <circle cx="32" cy="59" r="3.8"/>
+    <circle cx="32" cy="32" r="3.5"/>
+  </g>
+  <g fill="#008d9e">
+    <circle cx="32" cy="5" r="3.8"/>
+    <circle cx="55" cy="45.5" r="3.8"/>
+    <circle cx="9" cy="45.5" r="3.8"/>
+  </g>
+</svg>

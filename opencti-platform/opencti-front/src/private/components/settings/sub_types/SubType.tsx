@@ -10,6 +10,7 @@ import Loader from '../../../../components/Loader';
 import TitleMainEntity from '../../../../components/common/typography/TitleMainEntity';
 import { useFormatter } from '../../../../components/i18n';
 import useAttributes from '../../../../utils/hooks/useAttributes';
+import useEnterpriseEdition from '../../../../utils/hooks/useEnterpriseEdition';
 import useQueryLoading from '../../../../utils/hooks/useQueryLoading';
 import SubTypeMenu from './SubTypeMenu';
 import EntitySettingSettings from './entity_setting/EntitySettingSettings';
@@ -51,6 +52,7 @@ interface SubTypeProps {
 const SubTypeComponent: React.FC<SubTypeProps> = ({ queryRef }) => {
   const { t_i18n } = useFormatter();
   const { typesWithFintelTemplates } = useAttributes();
+  const isEnterpriseEdition = useEnterpriseEdition();
 
   const data = usePreloadedQuery(subTypeQuery, queryRef);
   const { isCustomViewsEnabled } = useProvideCustomViewsSettingsContext({ data });
@@ -81,7 +83,7 @@ const SubTypeComponent: React.FC<SubTypeProps> = ({ queryRef }) => {
   const tabs: SubTypeTabs = {
     workflow: isWorkflowConfigurationEnabled,
     attributes: isAttributesConfigurationEnabled,
-    templates: isFINTELTemplatesEnabled,
+    templates: isEnterpriseEdition && isFINTELTemplatesEnabled,
     'overview-layout': isCustomOverviewLayoutEnabled,
     'custom-views': isCustomViewsEnabled,
   };

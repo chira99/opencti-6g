@@ -2,7 +2,7 @@ import { MESSAGING$ } from '../../../relay/environment';
 
 export const SMALL_BAR_WIDTH = 48;
 
-export const OPEN_BAR_WIDTH = 180;
+export const OPEN_BAR_WIDTH = 240;
 
 export const NAV_OPEN_STORAGE_KEY = 'navOpen';
 

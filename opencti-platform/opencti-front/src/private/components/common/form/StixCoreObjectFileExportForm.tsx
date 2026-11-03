@@ -444,7 +444,7 @@ const StixCoreObjectFileExportForm = ({
                       </Card>
                     </Grid>
                   ))}
-                  {isContainer && (enabled && configured) && (
+                  {isEnterpriseEdition && isContainer && (enabled && configured) && (
                     <Grid size={{ xs: 4 }}>
                       <Card
                         aria-label={t_i18n('Ask AI')}

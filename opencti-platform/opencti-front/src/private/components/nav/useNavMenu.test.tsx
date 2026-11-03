@@ -1,6 +1,8 @@
 import React from 'react';
 import { describe, expect, it } from 'vitest';
-import { filterNavGroups, NavItem, RawNavGroup } from './useNavMenu';
+import useNavMenu, { filterNavGroups, NavItem, RawNavGroup } from './useNavMenu';
+import { createMockUserContext, testRenderHook } from '../../../utils/tests/test-render';
+import { BYPASS, SETTINGS_FILEINDEXING, SETTINGS_SETDISSEMINATION, VIRTUAL_ORGANIZATION_ADMIN } from '../../../utils/hooks/useGranted';
 
 const item = (id: string, extra: Partial<NavItem> = {}): NavItem => ({
   id, label: id, icon: <svg />, link: `/${id}`, ...extra,
@@ -86,5 +88,50 @@ describe('filterNavGroups', () => {
 
   it('returns nothing at all when the user may see nothing', () => {
     expect(filterNavGroups([{ id: 'g', items: [false] }, false], [])).toEqual([]);
+  });
+});
+
+const editionContext = (isEnterpriseEdition: boolean, capabilities = [BYPASS]) => createMockUserContext({
+  me: {
+    id: 'edition-test-user',
+    capabilities: capabilities.map((name) => ({ name })),
+    capabilitiesInDraft: [],
+    draftContext: null,
+    default_hidden_types: [],
+  },
+  settings: {
+    platform_enterprise_edition: { license_validated: isEnterpriseEdition },
+    platform_feature_flags: [],
+    platform_trash_enabled: false,
+  },
+  entitySettings: { edges: [] },
+});
+
+describe('navigation edition availability', () => {
+  it('keeps Community destinations and excludes whole-page Enterprise walls', () => {
+    const { hook } = testRenderHook(() => useNavMenu(), { userContext: editionContext(false) });
+    const items = hook.result.current.flatMap((group) => group.items);
+    const links = items.flatMap((entry) => [entry.link, ...(entry.subItems?.map((sub) => sub.link) ?? [])]);
+    expect(items.some((entry) => entry.id === 'pir')).toBe(false);
+    expect(links).not.toContain('/dashboard/settings/file_indexing');
+    expect(links).toContain('/dashboard/settings/activity/alerting');
+    expect(links).toContain('/dashboard/workspaces/dashboards_public');
+    expect(links).toContain('/dashboard/data/restriction');
+  });
+
+  it('preserves Enterprise navigation when the platform license is active', () => {
+    const { hook } = testRenderHook(() => useNavMenu(), { userContext: editionContext(true) });
+    const items = hook.result.current.flatMap((group) => group.items);
+    const links = items.flatMap((entry) => [entry.link, ...(entry.subItems?.map((sub) => sub.link) ?? [])]);
+    expect(items.some((entry) => entry.id === 'pir')).toBe(true);
+    expect(links).toContain('/dashboard/settings/file_indexing');
+    expect(links).toContain('/dashboard/settings/activity');
+  });
+
+  it('does not show a settings entry backed only by unavailable Enterprise permissions', () => {
+    const { hook } = testRenderHook(() => useNavMenu(), {
+      userContext: editionContext(false, [SETTINGS_FILEINDEXING, SETTINGS_SETDISSEMINATION, VIRTUAL_ORGANIZATION_ADMIN]),
+    });
+    expect(hook.result.current.flatMap((group) => group.items).some((entry) => entry.id === 'settings')).toBe(false);
   });
 });

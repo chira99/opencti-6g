@@ -9,6 +9,7 @@ import ExportContextProvider from '../../../utils/ExportContextProvider';
 import { useFormatter } from '../../../components/i18n';
 import { decodeSearchKeyword } from '../../../utils/SearchUtils';
 import useAuth from '../../../utils/hooks/useAuth';
+import useEnterpriseEdition from '../../../utils/hooks/useEnterpriseEdition';
 import { SearchContainerQueryFilesCountQuery } from './__generated__/SearchContainerQueryFilesCountQuery.graphql';
 import Breadcrumbs from '../../../components/Breadcrumbs';
 import type { Theme } from '../../../components/Theme';
@@ -29,6 +30,7 @@ interface SearchRootComponentProps {
 const SearchContainer: FunctionComponent<SearchRootComponentProps> = ({ children, filesCount = 0 }) => {
   const { t_i18n } = useFormatter();
   const theme = useTheme<Theme>();
+  const isEnterpriseEdition = useEnterpriseEdition();
   const { keyword } = useParams() as { keyword?: string };
   const encodedKeyword = keyword ? encodeURIComponent(keyword) : '';
   const location = useLocation();
@@ -48,16 +50,18 @@ const SearchContainer: FunctionComponent<SearchRootComponentProps> = ({ children
               </Link>
             </TabsTrigger>
             {/* asChild ignores the lib badge, so the count and the EE chip are composed inside the link */}
-            <TabsTrigger value="files" asChild>
-              <Link to={`/dashboard/search/files/${encodedKeyword ?? ''}`}>
-                <Badge badgeContent={filesCount} color="primary">
-                  <div style={{ padding: '0px 12px', display: 'flex' }}>
-                    {t_i18n('Files search')}
-                    <EEChip />
-                  </div>
-                </Badge>
-              </Link>
-            </TabsTrigger>
+            {isEnterpriseEdition && (
+              <TabsTrigger value="files" asChild>
+                <Link to={`/dashboard/search/files/${encodedKeyword ?? ''}`}>
+                  <Badge badgeContent={filesCount} color="primary">
+                    <div style={{ padding: '0px 12px', display: 'flex' }}>
+                      {t_i18n('Files search')}
+                      <EEChip />
+                    </div>
+                  </Badge>
+                </Link>
+              </TabsTrigger>
+            )}
           </TabsList>
         </Tabs>
       </Box>
@@ -91,7 +95,8 @@ const SearchContainerQuery = ({ children }: SearchContainerQueryProps) => {
   const {
     platformModuleHelpers: { isFileIndexManagerEnable },
   } = useAuth();
-  const fileSearchEnabled = isFileIndexManagerEnable();
+  const isEnterpriseEdition = useEnterpriseEdition();
+  const fileSearchEnabled = isEnterpriseEdition && isFileIndexManagerEnable();
   const { keyword } = useParams() as { keyword: string };
   const searchTerm = decodeSearchKeyword(keyword);
 
@@ -103,7 +108,7 @@ const SearchContainerQuery = ({ children }: SearchContainerQueryProps) => {
     if (fileSearchEnabled) {
       loadQuery(queryArgs, { fetchPolicy: 'store-and-network' });
     }
-  }, []);
+  }, [fileSearchEnabled, searchTerm, loadQuery]);
 
   return (
     <>
